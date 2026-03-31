@@ -90,6 +90,7 @@ export interface AdminProjectRecord {
 
 export type AdminTab =
   | "dashboard"
+  | "analytics"
   | "homepage"
   | "socialProof"
   | "media"

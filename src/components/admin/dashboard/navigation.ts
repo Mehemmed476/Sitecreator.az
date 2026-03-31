@@ -1,6 +1,7 @@
 import {
   BookOpenText,
   BriefcaseBusiness,
+  ChartColumnBig,
   FolderKanban,
   Home,
   ImageIcon,
@@ -34,6 +35,14 @@ export const adminTabs: AdminTabConfig[] = [
     label: "Panel",
     description: "Ümumi görünüş, qısa statistika və sürətli keçidlər",
     icon: LayoutDashboard,
+  },
+  {
+    id: "analytics",
+    href: "/admin/analytics",
+    group: "Panel",
+    label: "Analytics",
+    description: "GA4 trafik, səhifələr və kanal xülasəsi",
+    icon: ChartColumnBig,
   },
   {
     id: "homepage",
@@ -118,6 +127,16 @@ const workspaceMeta: Record<AdminTab, AdminWorkspaceMeta> = {
     stats: [
       { label: "Quruluş", value: "Route əsaslı admin" },
       { label: "Naviqasiya", value: "Sadə sidebar" },
+    ],
+  },
+  analytics: {
+    eyebrow: "Traffic paneli",
+    title: "GA4 statistikalarını admin içindən izləyin",
+    description:
+      "Public sayt trafiki, ən çox baxılan səhifələr və əsas trafik kanalları üçün birbaşa admin görünüşü.",
+    stats: [
+      { label: "Fokus", value: "Sessions + page views" },
+      { label: "Mənbə", value: "Google Analytics 4" },
     ],
   },
   homepage: {

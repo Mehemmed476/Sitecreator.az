@@ -161,6 +161,13 @@ export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary>
 
   const modules: DashboardModuleSummary[] = [
     {
+      label: "Analytics",
+      href: "/admin/analytics",
+      description: "GA4 trafik, ən çox baxılan səhifələr və əsas kanal xülasəsi.",
+      stat: "GA4 paneli",
+      note: "Deploydan sonra canlı trafik buradan izlənir",
+    },
+    {
       label: "Ana sehife",
       href: "/admin/homepage",
       description: "Hero bloku, xidmetler, ana sehife bolmeleri ve diller uzre metnler.",

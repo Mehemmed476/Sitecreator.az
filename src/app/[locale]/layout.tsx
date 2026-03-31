@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Chrome } from "@/components/Chrome";
 import { routing } from "@/i18n/routing";
+import { getGaMeasurementId } from "@/lib/analytics";
 import { getSiteUrl } from "@/lib/seo";
 import "../globals.css";
 
@@ -46,6 +48,7 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
+        <GoogleAnalytics measurementId={getGaMeasurementId()} />
         <NextIntlClientProvider messages={messages}>
           <Chrome>{children}</Chrome>
         </NextIntlClientProvider>
