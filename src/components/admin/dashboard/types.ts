@@ -1,15 +1,15 @@
 import type { LucideIcon } from "lucide-react";
 import type { InsightRecord } from "@/lib/insight-types";
 import type { LeadActivity, LeadSource, LeadStatus } from "@/lib/leads";
+import type { PortfolioTranslations } from "@/lib/portfolio-types";
 import type { SiteSettings } from "@/lib/site-settings";
 
 export interface PortfolioItem {
   _id: string;
   title: string;
-  description: string;
   imageUrl: string;
   techStack: string[];
-  projectUrl?: string;
+  translations: PortfolioTranslations;
   createdAt: string;
 }
 

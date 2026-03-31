@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Eye, EyeOff, Lock, UserRound } from "lucide-react";
 import { useLocale } from "next-intl";
+import { StatusMessage } from "@/components/ui/StatusMessage";
 
 export function PortalLoginPage() {
   const locale = useLocale();
@@ -114,9 +115,9 @@ export function PortalLoginPage() {
               </div>
 
               {error ? (
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <StatusMessage tone="error" title="Giriş alınmadı" role="alert" compact>
                   {error}
-                </div>
+                </StatusMessage>
               ) : null}
 
               <button

@@ -7,6 +7,9 @@ import { buildLocalizedMetadata } from "@/lib/seo";
 import { loadSocialProofContent } from "@/lib/social-proof-store";
 import { getAllServicePages, mapServiceListItem } from "@/lib/service-pages-store";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata({
   params,
 }: {
@@ -25,7 +28,7 @@ export default async function HomePage({
   setRequestLocale(locale);
 
   const [featuredProjects, homepageContent, socialProofContent, services] = await Promise.all([
-    getHomepageFeaturedProjects(),
+    getHomepageFeaturedProjects(locale as "az" | "en" | "ru"),
     getHomepageContent(),
     loadSocialProofContent(),
     getAllServicePages(),

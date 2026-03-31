@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "rea
 import { Copy, ImagePlus, RefreshCcw, Trash2 } from "lucide-react";
 import {
   AdminAlert,
+  AdminConfirmDialog,
   AdminEmptyState,
   AdminLoadingState,
   AdminSectionHeader,
@@ -56,6 +57,7 @@ export function MediaLibraryManager() {
   const [filter, setFilter] = useState<MediaFilter>("all");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -139,10 +141,6 @@ export function MediaLibraryManager() {
   }
 
   async function handleDelete(publicId: string) {
-    if (!confirm("Bu media faylı silinsin?")) {
-      return;
-    }
-
     try {
       setDeletingId(publicId);
       setError(null);
@@ -162,6 +160,7 @@ export function MediaLibraryManager() {
       }
 
       setSuccess("Media faylı silindi.");
+      setPendingDeleteId(null);
       await fetchItems();
     } catch {
       setError("Media faylını silmək olmadı.");
@@ -213,6 +212,24 @@ export function MediaLibraryManager() {
           {success}
         </AdminAlert>
       ) : null}
+
+      <AdminConfirmDialog
+        open={Boolean(pendingDeleteId)}
+        title="Media faylı silinsin?"
+        description={
+          pendingDeleteId
+            ? `"${items.find((item) => item.publicId === pendingDeleteId)?.filename ?? "Bu fayl"}" silinəcək.`
+            : ""
+        }
+        confirmText="Faylı sil"
+        loading={Boolean(pendingDeleteId && deletingId === pendingDeleteId)}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            void handleDelete(pendingDeleteId);
+          }
+        }}
+      />
 
       {loading ? (
         <AdminLoadingState />
@@ -285,7 +302,7 @@ export function MediaLibraryManager() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleDelete(item.publicId)}
+                        onClick={() => setPendingDeleteId(item.publicId)}
                         disabled={deletingId === item.publicId}
                         className="inline-flex items-center gap-1 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                       >

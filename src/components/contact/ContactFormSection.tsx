@@ -1,6 +1,7 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { AlertCircle, CheckCircle, Mail, MessageSquare, Phone, Send, User } from "lucide-react";
+import { Mail, MessageSquare, Phone, Send, User } from "lucide-react";
 import type { ContactFormState, ContactFormStatus } from "@/components/contact/useContactForm";
+import { StatusMessage } from "@/components/ui/StatusMessage";
 
 export function ContactFormSection({
   kicker,
@@ -100,17 +101,15 @@ export function ContactFormSection({
       </button>
 
       {status === "success" ? (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-          <CheckCircle className="h-4 w-4 shrink-0" />
+        <StatusMessage tone="success" title="Mesaj göndərildi" role="status" compact>
           {successText}
-        </div>
+        </StatusMessage>
       ) : null}
 
       {status === "error" ? (
-        <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <StatusMessage tone="error" title="Göndərmək alınmadı" role="alert" compact>
           {errorText}
-        </div>
+        </StatusMessage>
       ) : null}
     </form>
   );

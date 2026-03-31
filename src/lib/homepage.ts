@@ -7,6 +7,11 @@ import {
 import { HomepageContentModel } from "@/lib/models/HomepageContent";
 import { HomepageFeatured } from "@/lib/models/HomepageFeatured";
 import { Portfolio } from "@/lib/models/Portfolio";
+import {
+  getPortfolioTranslation,
+  normalizePortfolioTranslations,
+  type PortfolioLocale,
+} from "@/lib/portfolio-types";
 
 export type PortfolioLite = {
   _id: string;
@@ -38,7 +43,10 @@ export async function getHomepageContent(): Promise<HomepageContent> {
   }
 }
 
-export async function getHomepageFeaturedProjects(limit = 3): Promise<PortfolioLite[]> {
+export async function getHomepageFeaturedProjects(
+  locale: PortfolioLocale,
+  limit = 3
+): Promise<PortfolioLite[]> {
   try {
     await connectDB();
 
@@ -54,13 +62,18 @@ export async function getHomepageFeaturedProjects(limit = 3): Promise<PortfolioL
 
     for (const project of raws) {
       const id = String(project._id);
+      const translations = normalizePortfolioTranslations(project.translations, {
+        defaultDescription: typeof project.description === "string" ? project.description : "",
+        defaultProjectUrl: typeof project.projectUrl === "string" ? project.projectUrl : "",
+      });
+      const localized = getPortfolioTranslation({ translations }, locale);
       byId.set(id, {
         _id: id,
         title: String(project.title ?? ""),
-        description: String(project.description ?? ""),
+        description: localized.description,
         imageUrl: String(project.imageUrl ?? ""),
         techStack: Array.isArray(project.techStack) ? project.techStack.map(String) : [],
-        projectUrl: project.projectUrl ? String(project.projectUrl) : undefined,
+        projectUrl: localized.projectUrl,
       });
     }
 

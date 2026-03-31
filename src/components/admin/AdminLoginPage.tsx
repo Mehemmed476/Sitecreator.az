@@ -3,7 +3,8 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useLocale } from "next-intl";
-import { AlertCircle, Code2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Code2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { StatusMessage } from "@/components/ui/StatusMessage";
 
 export default function AdminLoginPage() {
   const locale = useLocale();
@@ -63,10 +64,15 @@ export default function AdminLoginPage() {
           </div>
 
           {error ? (
-            <div className="animate-fade-in-up flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <StatusMessage
+              tone="error"
+              title="Giriş alınmadı"
+              role="alert"
+              className="animate-fade-in-up"
+              compact
+            >
               {error}
-            </div>
+            </StatusMessage>
           ) : null}
 
           <div className="space-y-1.5">

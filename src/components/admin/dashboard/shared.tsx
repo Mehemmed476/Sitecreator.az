@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { StatusMessage } from "@/components/ui/StatusMessage";
 
 export function AdminSectionHeader({
   title,
@@ -23,23 +25,30 @@ export function AdminSectionHeader({
 
 export function AdminAlert({
   children,
+  title,
   tone = "error",
   role,
 }: {
   children: ReactNode;
-  tone?: "error" | "success";
+  title?: string;
+  tone?: "error" | "success" | "warning" | "info";
   role?: "alert" | "status";
 }) {
-  const toneClass =
-    tone === "success"
-      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
-      : "border-red-500/20 bg-red-500/10 text-red-600";
-
   return (
-    <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${toneClass}`} role={role}>
+    <StatusMessage
+      title={title}
+      tone={tone}
+      role={role}
+      className="mb-4 admin-status-message"
+      compact
+    >
       {children}
-    </div>
+    </StatusMessage>
   );
+}
+
+export function AdminConfirmDialog(props: Parameters<typeof ConfirmDialog>[0]) {
+  return <ConfirmDialog {...props} />;
 }
 
 export function AdminLoadingState() {

@@ -17,6 +17,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import {
   AdminAlert,
+  AdminConfirmDialog,
   AdminEmptyState,
   AdminLoadingState,
   AdminSectionHeader,
@@ -70,6 +71,7 @@ export function MessagesInbox() {
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
@@ -275,7 +277,9 @@ export function MessagesInbox() {
     }
   }
 
-  async function handleDelete(id: string) {
+  // Legacy browser confirm flow kept temporarily for reference during alert redesign.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async function _handleDeleteLegacy(id: string) {
     if (!confirm("Bu lead silinsin?")) return;
 
     const res = await fetch(`/api/contact/${id}`, {
@@ -291,6 +295,24 @@ export function MessagesInbox() {
 
     setLeads((prev) => prev.filter((lead) => lead._id !== id));
     setSelectedId((prev) => (prev === id ? null : prev));
+    setSuccess("Lead silindi.");
+  }
+
+  async function handleDeleteConfirmed(id: string) {
+    const res = await fetch(`/api/contact/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      setError(data?.error || "Lead silinmədi.");
+      return;
+    }
+
+    setLeads((prev) => prev.filter((lead) => lead._id !== id));
+    setSelectedId((prev) => (prev === id ? null : prev));
+    setPendingDeleteId(null);
     setSuccess("Lead silindi.");
   }
 
@@ -321,6 +343,23 @@ export function MessagesInbox() {
 
       {error ? <AdminAlert role="alert">{error}</AdminAlert> : null}
       {success ? <AdminAlert tone="success">{success}</AdminAlert> : null}
+
+      <AdminConfirmDialog
+        open={Boolean(pendingDeleteId)}
+        title="Lead silinsin?"
+        description={
+          pendingDeleteId
+            ? `"${leads.find((lead) => lead._id === pendingDeleteId)?.name ?? "Bu lead"}" CRM-dən silinəcək.`
+            : ""
+        }
+        confirmText="Lead-i sil"
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            void handleDeleteConfirmed(pendingDeleteId);
+          }
+        }}
+      />
 
       <section className="admin-panel rounded-[24px] p-4">
         <div className="grid gap-3 xl:grid-cols-[minmax(0,_1fr)_190px_190px_210px]">
@@ -434,7 +473,7 @@ export function MessagesInbox() {
 
                 <button
                   type="button"
-                  onClick={() => void handleDelete(selectedLead._id)}
+                  onClick={() => setPendingDeleteId(selectedLead._id)}
                   className="btn-secondary text-sm text-red-300"
                 >
                   <Trash2 className="h-4 w-4" />

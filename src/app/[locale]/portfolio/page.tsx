@@ -3,6 +3,11 @@ import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { Portfolio } from "@/lib/models/Portfolio";
+import {
+  getPortfolioTranslation,
+  normalizePortfolioTranslations,
+  type PortfolioLocale,
+} from "@/lib/portfolio-types";
 import { ExternalLink } from "lucide-react";
 import type { Metadata } from "next";
 import { buildLocalizedMetadata } from "@/lib/seo";
@@ -39,14 +44,22 @@ export default async function PortfolioPage({
   try {
     await connectDB();
     const raw = await Portfolio.find().sort({ createdAt: -1 }).lean();
-    projects = raw.map((p) => ({
-      _id: String(p._id),
-      title: p.title,
-      description: p.description,
-      imageUrl: p.imageUrl,
-      techStack: p.techStack,
-      projectUrl: p.projectUrl,
-    }));
+    projects = raw.map((p) => {
+      const translations = normalizePortfolioTranslations(p.translations, {
+        defaultDescription: typeof p.description === "string" ? p.description : "",
+        defaultProjectUrl: typeof p.projectUrl === "string" ? p.projectUrl : "",
+      });
+      const localized = getPortfolioTranslation({ translations }, locale as PortfolioLocale);
+
+      return {
+        _id: String(p._id),
+        title: p.title,
+        description: localized.description,
+        imageUrl: p.imageUrl,
+        techStack: p.techStack,
+        projectUrl: localized.projectUrl,
+      };
+    });
   } catch {
     // DB not available — show empty state
   }

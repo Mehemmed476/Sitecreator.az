@@ -357,6 +357,19 @@ body {
   border: 1px dashed var(--color-border);
 }
 
+.status-message {
+  position: relative;
+}
+
+.status-message::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 42%);
+  pointer-events: none;
+}
+
 .site-card-subtle {
   background: color-mix(in srgb, var(--color-panel-soft) 88%, transparent 12%);
   color: var(--color-foreground);
@@ -570,6 +583,10 @@ body {
 
 .admin-shell .text-emerald-600 {
   color: #86efac;
+}
+
+.admin-status-message {
+  margin-bottom: 1rem;
 }
 
 .admin-form-label {

@@ -2,6 +2,10 @@ import { auth } from "@/lib/auth";
 import { isAdminSession } from "@/lib/auth-guards";
 import { connectDB } from "@/lib/db";
 import { Portfolio } from "@/lib/models/Portfolio";
+import {
+  normalizePortfolioTranslations,
+  portfolioLocales,
+} from "@/lib/portfolio-types";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -17,31 +21,43 @@ async function readPortfolioPayload(request: NextRequest) {
         ? await (await import("@/lib/portfolio-images")).savePortfolioImage(image)
         : null;
     const fallbackImageUrl = String(formData.get("imageUrl") ?? "").trim();
+    const rawTranslations = String(formData.get("translations") ?? "").trim();
+    const parsedTranslations = rawTranslations ? JSON.parse(rawTranslations) : undefined;
+    const translations = normalizePortfolioTranslations(parsedTranslations, {
+      defaultDescription: String(formData.get("description") ?? "").trim(),
+      defaultProjectUrl: String(formData.get("projectUrl") ?? "").trim(),
+    });
 
     return {
       title: String(formData.get("title") ?? "").trim(),
-      description: String(formData.get("description") ?? "").trim(),
       imageUrl: uploadedImage?.url ?? fallbackImageUrl,
       imagePublicId: uploadedImage?.publicId,
       techStack: String(formData.get("techStack") ?? "")
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
-      projectUrl: String(formData.get("projectUrl") ?? "").trim() || undefined,
+      translations,
+      description: translations.az.description,
+      projectUrl: translations.az.projectUrl,
     };
   }
 
   const body = await request.json();
+  const translations = normalizePortfolioTranslations(body?.translations, {
+    defaultDescription: String(body?.description ?? "").trim(),
+    defaultProjectUrl: String(body?.projectUrl ?? "").trim(),
+  });
 
   return {
     title: String(body?.title ?? "").trim(),
-    description: String(body?.description ?? "").trim(),
     imageUrl: String(body?.imageUrl ?? "").trim(),
     imagePublicId: String(body?.imagePublicId ?? "").trim() || undefined,
     techStack: Array.isArray(body?.techStack)
       ? body.techStack.map((item: unknown) => String(item).trim()).filter(Boolean)
       : [],
-    projectUrl: String(body?.projectUrl ?? "").trim() || undefined,
+    translations,
+    description: translations.az.description,
+    projectUrl: translations.az.projectUrl,
   };
 }
 
@@ -80,9 +96,18 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const payload = await readPortfolioPayload(request);
 
-    if (!payload.title || !payload.description || !payload.imageUrl) {
+    const missingLocales = portfolioLocales.filter(
+      (locale) => !payload.translations[locale].description.trim()
+    );
+
+    if (!payload.title || !payload.imageUrl || missingLocales.length > 0) {
       return NextResponse.json(
-        { error: "Title, description, and image are required." },
+        {
+          error:
+            missingLocales.length > 0
+              ? `Descriptions are required for: ${missingLocales.join(", ")}.`
+              : "Title and image are required.",
+        },
         { status: 400 }
       );
     }

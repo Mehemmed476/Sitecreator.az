@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import {
   AdminAlert,
+  AdminConfirmDialog,
   AdminEmptyState,
   AdminLoadingState,
   AdminSectionHeader,
@@ -108,6 +109,7 @@ export function InsightsManager() {
   const [coverImageFiles, setCoverImageFiles] = useState<InsightCoverImageFiles>({});
   const [coverImagePreviews, setCoverImagePreviews] = useState<InsightCoverImagePreviews>({});
   const [activeLocale, setActiveLocale] = useState<InsightLocale>("az");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState<InsightFormState>(createEmptyForm);
 
   const publishedCount = useMemo(() => items.filter((item) => item.published).length, [items]);
@@ -382,10 +384,6 @@ export function InsightsManager() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Bu məqalə silinsin?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/insights/${id}`, {
         method: "DELETE",
@@ -398,6 +396,7 @@ export function InsightsManager() {
         return;
       }
 
+      setDeleteTargetId(null);
       await fetchItems();
     } catch {
       setError("Məqaləni silmək olmadı.");
@@ -430,6 +429,23 @@ export function InsightsManager() {
 
       {error ? <AdminAlert role="alert">{error}</AdminAlert> : null}
 
+      <AdminConfirmDialog
+        open={Boolean(deleteTargetId)}
+        title="Məqalə silinsin?"
+        description={
+          deleteTargetId
+            ? `"${items.find((item) => item._id === deleteTargetId)?.translations.az.title || "Bu məqalə"}" silinəcək.`
+            : ""
+        }
+        confirmText="Məqaləni sil"
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => {
+          if (deleteTargetId) {
+            void handleDelete(deleteTargetId);
+          }
+        }}
+      />
+
       {showForm ? (
         <InsightFormModal
           editingId={editingId}
@@ -461,7 +477,7 @@ export function InsightsManager() {
               key={item._id}
               item={item}
               onEdit={startEdit}
-              onDelete={handleDelete}
+              onDelete={setDeleteTargetId}
             />
           ))}
         </div>

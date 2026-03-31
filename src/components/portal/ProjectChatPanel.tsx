@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, LoaderCircle, MessageSquareText, Paperclip, Send, X } from "lucide-react";
 import type { ProjectChatMessageRecord } from "@/lib/project-chat";
+import { StatusMessage } from "@/components/ui/StatusMessage";
 
 function formatChatTime(value: string) {
   return new Date(value).toLocaleString("az-AZ", {
@@ -202,15 +203,15 @@ export function ProjectChatPanel({
       </div>
 
       {!realtimeEnabled ? (
-        <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+        <StatusMessage tone="warning" title="Realtime aktiv deyil" className="mt-4" compact>
           Realtime chat üçün Pusher env dəyərləri əlavə olunmalıdır. Mesajlar yenə də saxlanılır.
-        </div>
+        </StatusMessage>
       ) : null}
 
       {error ? (
-        <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <StatusMessage tone="error" title="Chat xətası" role="alert" className="mt-4" compact>
           {error}
-        </div>
+        </StatusMessage>
       ) : null}
 
       <div className="mt-5 h-[480px] overflow-y-auto rounded-[24px] border border-border bg-background/40 p-4">
