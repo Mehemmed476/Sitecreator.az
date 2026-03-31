@@ -1,0 +1,228 @@
+{
+  "nav": {
+    "home": "Ana Səhifə",
+    "services": "Xidmətlər",
+    "portfolio": "Portfolio",
+    "packages": "Qiymət kalkulyatoru",
+    "about": "Haqqımızda",
+    "contact": "Əlaqə",
+    "blog": "Bloq"
+  },
+  "hero": {
+    "badge": "🚀 Veb Həllər Agentliyi",
+    "title": "Rəqəmsal Uğurunuzu",
+    "titleHighlight": "Bizimlə Qurun",
+    "description": "Müasir, sürətli və SEO-optimizasiyalı veb saytlar yaradırıq. Biznesiniz üçün professional onlayn mövcudluq təmin edirik.",
+    "cta": "Layihənizə Başlayın",
+    "ctaSecondary": "Portfoliomuz"
+  },
+  "features": {
+    "sectionTitle": "Xidmətlərimiz",
+    "sectionDescription": "Biznesinizin rəqəmsal inkişafı üçün professional xidmətlər",
+    "items": [
+      {
+        "title": "Veb Dizayn",
+        "description": "Müasir və estetik dizaynlar ilə brendinizi ən yaxşı şəkildə təqdim edirik."
+      },
+      {
+        "title": "Veb İnkişaf",
+        "description": "Ən son texnologiyalarla sürətli, etibarlı və miqyaslana bilən saytlar qururuq."
+      },
+      {
+        "title": "SEO Optimizasiya",
+        "description": "Axtarış motorlarında yüksək sıralama üçün saytınızı optimallaşdırırıq."
+      },
+      {
+        "title": "Mobil Uyğunluq",
+        "description": "Bütün cihazlarda mükəmməl görünən responsiv dizaynlar təqdim edirik."
+      },
+      {
+        "title": "E-ticarət Həlləri",
+        "description": "Onlayn satış platformanızı sıfırdan qururuq və inteqrasiya edirik."
+      },
+      {
+        "title": "Texniki Dəstək",
+        "description": "Layihəniz başa çatdıqdan sonra da davamlı texniki dəstək təmin edirik."
+      }
+    ]
+  },
+  "whyUs": {
+    "sectionTitle": "Niyə Biz?",
+    "sectionDescription": "Sitecreator ilə rəqəmsal uğurunuzu təmin edin",
+    "items": [
+      {
+        "title": "10+ İllik Təcrübə",
+        "description": "Sahəmizdə uzun illərdir fəaliyyət göstəririk və yüzlərlə uğurlu layihə tamamlamışıq."
+      },
+      {
+        "title": "Müasir Texnologiyalar",
+        "description": "React, Next.js, Node.js kimi ən son texnologiyalardan istifadə edirik."
+      },
+      {
+        "title": "24/7 Dəstək",
+        "description": "Hər zaman əlçatan olan komandamız sizə kömək etməyə hazırdır."
+      }
+    ]
+  },
+  "footer": {
+    "description": "Professional veb saytlar və rəqəmsal həllər agentliyi.",
+    "quickLinks": "Sürətli Keçidlər",
+    "services": "Xidmətlər",
+    "contactInfo": "Əlaqə Məlumatları",
+    "email": "info@sitecreator.az",
+    "phone": "+994 50 123 45 67",
+    "address": "Bakı, Azərbaycan",
+    "copyright": "© 2024 Sitecreator. Bütün hüquqlar qorunur.",
+    "serviceItems": [
+      "Veb Dizayn",
+      "Veb İnkişaf",
+      "SEO",
+      "E-ticarət"
+    ]
+  },
+  "portfolio": {
+    "title": "Portfoliomuz",
+    "description": "Tamamladığımız uğurlu layihələrlə tanış olun.",
+    "viewProject": "Layihəyə Bax",
+    "techStack": "Texnologiyalar",
+    "noProjects": "Hələlik layihə əlavə edilməyib."
+  },
+  "packages": {
+    "title": "Qiymət Paketləri",
+    "description": "Sizin üçün ən uyğun paketi seçin.",
+    "popular": "Populyar",
+    "cta": "Sifariş Et",
+    "items": [
+      {
+        "name": "Başlanğıc",
+        "price": "299",
+        "description": "Kiçik bizneslər üçün ideal başlanğıc paketi.",
+        "features": [
+          "5 səhifəyə qədər",
+          "Responsiv dizayn",
+          "SEO əsasları",
+          "1 ay dəstək",
+          "SSL sertifikatı"
+        ]
+      },
+      {
+        "name": "Professional",
+        "price": "699",
+        "description": "Orta bizneslər üçün tam funksional həll.",
+        "features": [
+          "15 səhifəyə qədər",
+          "Responsiv dizayn",
+          "Qabaqcıl SEO",
+          "3 ay dəstək",
+          "SSL sertifikatı",
+          "Admin panel",
+          "Blog bölməsi"
+        ]
+      },
+      {
+        "name": "Korporativ",
+        "price": "1499",
+        "description": "Böyük şirkətlər üçün premium həll.",
+        "features": [
+          "Limitsiz səhifə",
+          "Responsiv dizayn",
+          "Premium SEO",
+          "12 ay dəstək",
+          "SSL sertifikatı",
+          "Admin panel",
+          "E-ticarət",
+          "CRM inteqrasiyası"
+        ]
+      }
+    ]
+  },
+  "about": {
+    "title": "Haqqımızda",
+    "description": "Sitecreator - rəqəmsal dünyanın etibarlı tərəfdaşı.",
+    "story": "Biz 2014-cü ildən bəri müştərilərimizə keyfiyyətli veb həllər təqdim edirik. Komandamız müxtəlif sahələrdən olan peşəkarlardan ibarətdir.",
+    "mission": "Missiyamız",
+    "missionText": "Hər bir müştərimizə fərdi yanaşma ilə ən keyfiyyətli rəqəmsal həllər təqdim etmək.",
+    "vision": "Vizyonumuz",
+    "visionText": "Azərbaycanda və regionda veb inkişaf sahəsində lider olmaq.",
+    "stats": {
+      "projects": "200+",
+      "projectsLabel": "Tamamlanmış Layihə",
+      "clients": "150+",
+      "clientsLabel": "Məmnun Müştəri",
+      "years": "10+",
+      "yearsLabel": "İllik Təcrübə"
+    }
+  },
+  "contact": {
+    "badge": "Sohbətə başlayaq",
+    "title": "Əlaqə",
+    "description": "Bizimlə əlaqə saxlayın və layihənizi müzakirə edək.",
+    "quickTitle": "Sürətli əlaqə",
+    "directTitle": "Sizin üçün rahat olan kanaldan bizə yazın",
+    "directDescription": "Nə istədiyinizi artıq dəqiq bilirsinizsə, birbaşa yazın. Hələ qərar verməmisinizsə, qısa mesaj göndərin, birlikdə sizə uyğun həlli formalaşdıraq.",
+    "responseLabel": "Cavab müddəti",
+    "responseValue": "Adətən 24 saat içində",
+    "formEyebrow": "Layihə məlumatı",
+    "formTitle": "Nə qurmaq istədiyinizi bizə yazın",
+    "formDescription": "Fikrinizi, hədəf auditoriyanızı və ya biznes məqsədinizi qısa şəkildə paylaşın. Mesaj nə qədər aydın olsa, sizi düzgün istiqamətə o qədər tez yönləndirə bilərik.",
+    "nameLabel": "Ad",
+    "namePlaceholder": "Adınız",
+    "emailLabel": "E-poçt",
+    "emailPlaceholder": "E-poçt ünvanınız",
+    "phoneLabel": "Telefon nömrəsi",
+    "phonePlaceholder": "Telefon nömrəniz",
+    "messageLabel": "Mesaj",
+    "messagePlaceholder": "Mesajınız",
+    "ctaWhatsApp": "WhatsApp-da yazın",
+    "ctaCall": "Zəng edin",
+    "ctaEmail": "E-poçt göndərin",
+    "pendingInfo": "Tezliklə yenilənəcək",
+    "trustItems": [
+      "Səmimi ilk danışıq",
+      "Layihəniz üçün aydın yol xəritəsi",
+      "Təzyiqsiz məsləhətləşmə"
+    ],
+    "details": {
+      "phone": "Telefon",
+      "hours": "İş saatları",
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "email": "E-poçt",
+      "address": "Ünvan"
+    },
+    "submit": "Göndər",
+    "success": "Mesajınız uğurla göndərildi!",
+    "error": "Xəta baş verdi. Yenidən cəhd edin."
+  },
+  "featuredProjects": {
+    "title": "Layihələrimiz",
+    "noProjects": "Hələlik layihə seçilməyib."
+  },
+  "blog": {
+    "badge": "Böyümə jurnalı",
+    "title": "Bloq və keys araşdırmaları",
+    "description": "Müştəri sizə yazmazdan əvvəl etibar yaradacaq faydalı məqalələr, SEO-yönümlü bələdçilər və real layihə nəticələri burada toplanır.",
+    "ctaPrimary": "Qiymət al",
+    "ctaSecondary": "Bizimlə danış",
+    "statArticles": "Məqalələr",
+    "statCaseStudies": "Keyslər",
+    "statFeatured": "Seçilənlər",
+    "emptyTitle": "Yeni məqalələr tezliklə burada olacaq.",
+    "emptyDescription": "Səhifə hazırdır. Admin paneldən məqalə və keys araşdırmaları əlavə etdikcə burada görünəcək.",
+    "featuredEyebrow": "Ön plana çıxanlar",
+    "featuredTitle": "Seçilən yazılar",
+    "caseStudiesEyebrow": "Real nəticələr",
+    "caseStudiesTitle": "Keys araşdırmaları",
+    "articlesEyebrow": "Faydalı kontent",
+    "articlesTitle": "Son məqalələr",
+    "readMore": "Məqaləni oxu",
+    "readTime": "{count} dəq oxu",
+    "featuredBadge": "Seçilən",
+    "ctaEyebrow": "Öz biznesiniz üçün də istəyirsiniz?",
+    "ctaTitle": "Növbəti ideyanızı güclü bir rəqəmsal məhsula çevirək.",
+    "ctaDescription": "Bu yazı sizin hədəfinizə yaxındırsa, onun üçün düzgün sayt, funnel və ya SEO yol xəritəsini birlikdə qura bilərik.",
+    "typeBlog": "Bloq",
+    "typeCaseStudy": "Keys",
+    "statLocales": "Diller"
+  }
+}

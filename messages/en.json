@@ -1,0 +1,228 @@
+{
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "packages": "Price Calculator",
+    "about": "About Us",
+    "contact": "Contact",
+    "blog": "Blog"
+  },
+  "hero": {
+    "badge": "🚀 Web Solutions Agency",
+    "title": "Build Your Digital Success",
+    "titleHighlight": "With Us",
+    "description": "We create modern, fast, and SEO-optimized websites. We provide a professional online presence for your business.",
+    "cta": "Start Your Project",
+    "ctaSecondary": "Our Portfolio"
+  },
+  "features": {
+    "sectionTitle": "Our Services",
+    "sectionDescription": "Professional services for your business's digital growth",
+    "items": [
+      {
+        "title": "Web Design",
+        "description": "We present your brand in the best way with modern and aesthetic designs."
+      },
+      {
+        "title": "Web Development",
+        "description": "We build fast, reliable, and scalable websites with the latest technologies."
+      },
+      {
+        "title": "SEO Optimization",
+        "description": "We optimize your website for high rankings in search engines."
+      },
+      {
+        "title": "Mobile Responsiveness",
+        "description": "We deliver responsive designs that look perfect on all devices."
+      },
+      {
+        "title": "E-commerce Solutions",
+        "description": "We build and integrate your online sales platform from scratch."
+      },
+      {
+        "title": "Technical Support",
+        "description": "We provide ongoing technical support even after your project is completed."
+      }
+    ]
+  },
+  "whyUs": {
+    "sectionTitle": "Why Choose Us?",
+    "sectionDescription": "Ensure your digital success with Sitecreator",
+    "items": [
+      {
+        "title": "10+ Years of Experience",
+        "description": "We have been active in our field for many years and have completed hundreds of successful projects."
+      },
+      {
+        "title": "Modern Technologies",
+        "description": "We use the latest technologies such as React, Next.js, and Node.js."
+      },
+      {
+        "title": "24/7 Support",
+        "description": "Our always-available team is ready to help you."
+      }
+    ]
+  },
+  "footer": {
+    "description": "Professional websites and digital solutions agency.",
+    "quickLinks": "Quick Links",
+    "services": "Services",
+    "contactInfo": "Contact Info",
+    "email": "info@sitecreator.az",
+    "phone": "+994 50 123 45 67",
+    "address": "Baku, Azerbaijan",
+    "copyright": "© 2024 Sitecreator. All rights reserved.",
+    "serviceItems": [
+      "Web Design",
+      "Web Development",
+      "SEO",
+      "E-commerce"
+    ]
+  },
+  "portfolio": {
+    "title": "Our Portfolio",
+    "description": "Discover the successful projects we have completed.",
+    "viewProject": "View Project",
+    "techStack": "Technologies",
+    "noProjects": "No projects have been added yet."
+  },
+  "packages": {
+    "title": "Pricing Packages",
+    "description": "Choose the most suitable package for you.",
+    "popular": "Popular",
+    "cta": "Order Now",
+    "items": [
+      {
+        "name": "Starter",
+        "price": "299",
+        "description": "Ideal starter package for small businesses.",
+        "features": [
+          "Up to 5 pages",
+          "Responsive design",
+          "Basic SEO",
+          "1 month support",
+          "SSL certificate"
+        ]
+      },
+      {
+        "name": "Professional",
+        "price": "699",
+        "description": "Fully functional solution for medium businesses.",
+        "features": [
+          "Up to 15 pages",
+          "Responsive design",
+          "Advanced SEO",
+          "3 months support",
+          "SSL certificate",
+          "Admin panel",
+          "Blog section"
+        ]
+      },
+      {
+        "name": "Enterprise",
+        "price": "1499",
+        "description": "Premium solution for large companies.",
+        "features": [
+          "Unlimited pages",
+          "Responsive design",
+          "Premium SEO",
+          "12 months support",
+          "SSL certificate",
+          "Admin panel",
+          "E-commerce",
+          "CRM integration"
+        ]
+      }
+    ]
+  },
+  "about": {
+    "title": "About Us",
+    "description": "Sitecreator - your trusted partner in the digital world.",
+    "story": "We have been providing quality web solutions to our clients since 2014. Our team consists of professionals from various fields.",
+    "mission": "Our Mission",
+    "missionText": "To provide the highest quality digital solutions to each of our clients with an individual approach.",
+    "vision": "Our Vision",
+    "visionText": "To be a leader in web development in Azerbaijan and the region.",
+    "stats": {
+      "projects": "200+",
+      "projectsLabel": "Completed Projects",
+      "clients": "150+",
+      "clientsLabel": "Satisfied Clients",
+      "years": "10+",
+      "yearsLabel": "Years of Experience"
+    }
+  },
+  "contact": {
+    "badge": "Start the conversation",
+    "title": "Contact",
+    "description": "Get in touch with us and let's discuss your project.",
+    "quickTitle": "Quick contact",
+    "directTitle": "Reach us through the channel that feels easiest",
+    "directDescription": "If you already know what you need, write to us directly. If you are still deciding, send a short message and we will help shape the right solution together.",
+    "responseLabel": "Response time",
+    "responseValue": "Usually within 24 hours",
+    "formEyebrow": "Project brief",
+    "formTitle": "Tell us what you want to build",
+    "formDescription": "Share a few details about your idea, target audience, or business goals. The clearer the message, the faster we can guide you to the right next step.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your Name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Your Email",
+    "phoneLabel": "Phone",
+    "phonePlaceholder": "Your Phone Number",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Your Message",
+    "ctaWhatsApp": "Write on WhatsApp",
+    "ctaCall": "Call us",
+    "ctaEmail": "Send an email",
+    "pendingInfo": "Updating soon",
+    "trustItems": [
+      "Friendly first conversation",
+      "Clear roadmap for your project",
+      "No-pressure consultation"
+    ],
+    "details": {
+      "phone": "Phone",
+      "hours": "Business hours",
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "email": "Email",
+      "address": "Address"
+    },
+    "submit": "Send",
+    "success": "Your message has been sent successfully!",
+    "error": "An error occurred. Please try again."
+  },
+  "featuredProjects": {
+    "title": "Our Projects",
+    "noProjects": "No projects selected yet."
+  },
+  "blog": {
+    "badge": "Growth Journal",
+    "title": "Blog and Case Studies",
+    "description": "Useful articles, SEO-focused guides, and real project stories that help clients trust your process before they even write to you.",
+    "ctaPrimary": "Get a Quote",
+    "ctaSecondary": "Talk to Us",
+    "statArticles": "Articles",
+    "statCaseStudies": "Case Studies",
+    "statFeatured": "Featured",
+    "emptyTitle": "Fresh content is coming soon.",
+    "emptyDescription": "Your blog page is ready. Once you publish articles from admin, they will appear here automatically.",
+    "featuredEyebrow": "Spotlight",
+    "featuredTitle": "Featured insights",
+    "caseStudiesEyebrow": "Proof of work",
+    "caseStudiesTitle": "Case studies",
+    "articlesEyebrow": "Knowledge base",
+    "articlesTitle": "Latest articles",
+    "readMore": "Read article",
+    "readTime": "{count} min read",
+    "featuredBadge": "Featured",
+    "ctaEyebrow": "Need this for your business too?",
+    "ctaTitle": "Let's turn your next idea into a high-converting product.",
+    "ctaDescription": "If this article matches the kind of result you want, we can shape the right website, funnel, or SEO roadmap together.",
+    "typeBlog": "Blog",
+    "typeCaseStudy": "Case Study",
+    "statLocales": "Locales"
+  }
+}
