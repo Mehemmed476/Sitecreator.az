@@ -38,6 +38,7 @@ export default async function HomePage({
     <>
       <OrganizationJsonLd />
       <HomePageContent
+        locale={locale as "az" | "en" | "ru"}
         featuredProjects={featuredProjects}
         content={homepageContent[locale as "az" | "en" | "ru"]}
         socialProof={socialProofContent[locale as "az" | "en" | "ru"]}

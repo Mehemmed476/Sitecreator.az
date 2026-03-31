@@ -13,11 +13,13 @@ import type { SocialProofLocaleContent } from "@/lib/social-proof-content";
 import type { ServiceListItem } from "@/lib/service-pages-store";
 
 export function HomePageContent({
+  locale,
   featuredProjects,
   content,
   socialProof,
   serviceLinks,
 }: {
+  locale: "az" | "en" | "ru";
   featuredProjects: PortfolioLite[];
   content: HomepageLocaleContent;
   socialProof: SocialProofLocaleContent;
@@ -26,6 +28,7 @@ export function HomePageContent({
   return (
     <>
       <HomeHeroSection
+        locale={locale}
         badge={content.heroBadge}
         title={content.heroTitle}
         titleHighlight={content.heroTitleHighlight}
