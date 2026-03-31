@@ -1,3 +1,4 @@
+import { hasGaReportingConfig } from "@/lib/analytics";
 import { connectDB } from "@/lib/db";
 import { insightLocales } from "@/lib/insight-types";
 import { getLeadSourceLabel, getLeadStatusLabel } from "@/lib/leads";
@@ -13,39 +14,62 @@ import { SiteSettingsModel } from "@/lib/models/SiteSettings";
 import { User } from "@/lib/models/User";
 
 type DashboardLocale = (typeof insightLocales)[number];
+type DashboardTone = "neutral" | "accent" | "success" | "danger";
+type WorkspaceHealth = "healthy" | "progress" | "attention";
 
-interface DashboardMetric {
+interface DashboardSnapshot {
   label: string;
   value: string;
-  note: string;
-  tone: "neutral" | "accent" | "success";
 }
 
-interface DashboardModuleSummary {
+export interface DashboardPulseItem {
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: DashboardTone;
+}
+
+export interface DashboardActionLane {
+  eyebrow: string;
+  title: string;
+  detail: string;
+  href: string;
+  cta: string;
+  stat: string;
+  tone: DashboardTone;
+}
+
+export interface DashboardWorkspaceCard {
   label: string;
   href: string;
   description: string;
   stat: string;
   note: string;
+  health: WorkspaceHealth;
 }
 
-interface DashboardRecentItem {
+export interface DashboardActivityItem {
   title: string;
   meta: string;
   href: string;
+  kind: string;
+  timestamp: number;
 }
 
-interface DashboardChecklistItem {
+export interface DashboardChecklistItem {
   label: string;
   complete: boolean;
   detail: string;
+  href: string;
 }
 
 export interface AdminDashboardSummary {
-  metrics: DashboardMetric[];
-  modules: DashboardModuleSummary[];
-  recentMessages: DashboardRecentItem[];
-  recentPosts: DashboardRecentItem[];
+  snapshots: DashboardSnapshot[];
+  pulse: DashboardPulseItem[];
+  actionLanes: DashboardActionLane[];
+  workspaceHealth: DashboardWorkspaceCard[];
+  recentActivity: DashboardActivityItem[];
   checklist: DashboardChecklistItem[];
 }
 
@@ -59,17 +83,17 @@ function findFirstLocalizedTitle(
     }
   }
 
-  return "Adsiz meqale";
+  return "Adsız məqalə";
 }
 
 function formatDate(value: Date | string | undefined) {
   if (!value) {
-    return "Teyin olunmayib";
+    return "Təyin olunmayıb";
   }
 
   const date = new Date(value);
 
-  return date.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString("az-AZ", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -85,16 +109,32 @@ function countReadyLocales(
   }).length;
 }
 
+function formatCount(value: number, singular: string, plural: string = singular) {
+  if (value === 1) {
+    return `1 ${singular}`;
+  }
+
+  return `${value} ${plural}`;
+}
+
 export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary> {
   await connectDB();
+
+  const now = new Date();
 
   const [
     portfolioCount,
     leadCount,
     newLeads,
+    overdueFollowUps,
     calculatorLeads,
     projectCount,
+    activeProjects,
+    reviewProjects,
     proposalCount,
+    draftProposals,
+    sentProposals,
+    approvedProposals,
     clientCount,
     publishedInsights,
     draftInsights,
@@ -104,13 +144,23 @@ export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary>
     siteSettings,
     latestMessages,
     latestInsights,
+    latestProjects,
   ] = await Promise.all([
     Portfolio.countDocuments(),
     Contact.countDocuments(),
     Contact.countDocuments({ status: "new" }),
+    Contact.countDocuments({
+      nextFollowUpAt: { $ne: null, $lte: now },
+      status: { $nin: ["won", "lost"] },
+    }),
     Contact.countDocuments({ source: "calculator" }),
     Project.countDocuments(),
+    Project.countDocuments({ status: { $in: ["new", "planning", "in_progress", "review"] } }),
+    Project.countDocuments({ status: "review" }),
     Proposal.countDocuments(),
+    Proposal.countDocuments({ status: "draft" }),
+    Proposal.countDocuments({ status: "sent" }),
+    Proposal.countDocuments({ status: "approved" }),
     User.countDocuments({ role: "client" }),
     Insight.countDocuments({ published: true }),
     Insight.countDocuments({ published: false }),
@@ -118,165 +168,272 @@ export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary>
     HomepageContentModel.findOne({ singletonKey: "main" }).lean(),
     PriceCalculatorConfigModel.findOne({ singletonKey: "main" }).lean(),
     SiteSettingsModel.findOne({ singletonKey: "main" }).lean(),
-    Contact.find().sort({ createdAt: -1 }).limit(4).lean(),
+    Contact.find().sort({ updatedAt: -1 }).limit(4).lean(),
     Insight.find().sort({ updatedAt: -1 }).limit(4).lean(),
+    Project.find().sort({ updatedAt: -1 }).limit(4).lean(),
   ]);
 
-  const metrics: DashboardMetric[] = [
-    {
-      label: "Portfolio layiheleri",
-      value: String(portfolioCount),
-      note: featuredDoc?.projectIds?.length
-        ? `Ana sehifede ${featuredDoc.projectIds.length} secilmis layihe var`
-        : "Secilmis layihe yoxdur",
-      tone: "accent",
-    },
-    {
-      label: "Mesaj qutusu",
-      value: newLeads > 0 ? `${newLeads} yeni lead` : "CRM temizdir",
-      note: `Umumi ${leadCount} muraciet toplanib`,
-      tone: newLeads > 0 ? "accent" : "success",
-    },
-    {
-      label: "Paylasilan meqaleler",
-      value: String(publishedInsights),
-      note: `${draftInsights} draft gozleyir`,
-      tone: "neutral",
-    },
-    {
-      label: "Kalkulyator qurulusu",
-      value: calculatorConfig ? "Hazirdir" : "Yoxdur",
-      note: calculatorConfig
-        ? `${calculatorConfig.config.services.length} xidmet, ${calculatorLeads} kalkulyator lead-i`
-        : "Hele kalkulyator ayari saxlanmayib",
-      tone: calculatorConfig ? "success" : "accent",
-    },
-    {
-      label: "Portal axini",
-      value: `${projectCount} layihə / ${proposalCount} təklif`,
-      note: clientCount ? `${clientCount} client hesabı aktivdir` : "Hələ client hesabı yoxdur",
-      tone: projectCount ? "success" : "neutral",
-    },
+  const localizedInsightCount = latestInsights.filter(
+    (entry) => countReadyLocales(entry.translations) === 3
+  ).length;
+  const featuredCount = featuredDoc?.projectIds?.length ?? 0;
+  const contactChannelsReady = Boolean(
+    siteSettings?.phone && siteSettings?.whatsapp && siteSettings?.instagram
+  );
+  const analyticsReady = hasGaReportingConfig();
+
+  const snapshots: DashboardSnapshot[] = [
+    { label: "Lead", value: String(leadCount) },
+    { label: "Aktiv layihə", value: String(activeProjects) },
+    { label: "Yayımlanan məqalə", value: String(publishedInsights) },
+    { label: "Client portal hesabı", value: String(clientCount) },
   ];
 
-  const modules: DashboardModuleSummary[] = [
+  const pulse: DashboardPulseItem[] = [
     {
-      label: "Analytics",
-      href: "/admin/analytics",
-      description: "GA4 trafik, ən çox baxılan səhifələr və əsas kanal xülasəsi.",
-      stat: "GA4 paneli",
-      note: "Deploydan sonra canlı trafik buradan izlənir",
-    },
-    {
-      label: "Ana sehife",
-      href: "/admin/homepage",
-      description: "Hero bloku, xidmetler, ana sehife bolmeleri ve diller uzre metnler.",
-      stat: homepageContent ? "Hazirdir" : "Qurulmalidir",
-      note: homepageContent
-        ? `AZ ucun ${homepageContent.content.az.serviceItems.length} xidmet karti var`
-        : "Ana sehife mezmunu hele yaradilmiyib",
-    },
-    {
-      label: "Portfolio",
-      href: "/admin/portfolio",
-      description: "Layihe kartlari, sekiller ve public portfolio gorunusu.",
-      stat: `${portfolioCount} layihe`,
-      note: featuredDoc?.projectIds?.length
-        ? `${featuredDoc.projectIds.length} layihe on plana cixarilib`
-        : "Ana sehife ucun secim yoxdur",
-    },
-    {
-      label: "Bloq ve SEO",
-      href: "/admin/blog",
-      description: "Coxdilli meqaleler, slug-lar, SEO saheleri ve cover sekilleri.",
-      stat: `${publishedInsights} paylasilib / ${draftInsights} draft`,
-      note: latestInsights[0]
-        ? `Son yenilenme: ${formatDate(latestInsights[0].updatedAt)}`
-        : "Hele meqale paylasilmayib",
-    },
-    {
-      label: "Mesajlar",
+      label: "Yeni lead-lər",
+      value: String(newLeads),
+      detail:
+        newLeads > 0
+          ? "İlk cavab gecikməsin deyə CRM-dən dərhal bax."
+          : "Hazırda cavab gözləyən yeni müraciət yoxdur.",
       href: "/admin/sales/messages",
-      description: "Elaqe formu ve kalkulyatordan gelen lead-leri statusla izle.",
-      stat: newLeads > 0 ? `${newLeads} yeni` : "Hamisi baxilib",
-      note: latestMessages[0]
-        ? `Son muraciet: ${formatDate(latestMessages[0].createdAt)}`
-        : "Hele mesaj yoxdur",
+      tone: newLeads > 0 ? "danger" : "success",
     },
     {
-      label: "Layihələr və təkliflər",
+      label: "Gecikmiş follow-up",
+      value: String(overdueFollowUps),
+      detail:
+        overdueFollowUps > 0
+          ? "Vaxtı keçmiş follow-up-lar satış axınını ləngidir."
+          : "Follow-up növbəsi təmizdir.",
+      href: "/admin/sales/messages",
+      tone: overdueFollowUps > 0 ? "danger" : "success",
+    },
+    {
+      label: "Cavab gözləyən təklif",
+      value: String(sentProposals),
+      detail:
+        sentProposals > 0
+          ? "Göndərilmiş təkliflərə geri dönüşü izləmək vaxtıdır."
+          : "Hal-hazırda cavab gözləyən təklif yoxdur.",
       href: "/admin/sales/projects",
-      description: "Lead-dən yaranan proposal və project axınını izlə.",
-      stat: `${projectCount} layihə / ${proposalCount} təklif`,
-      note: clientCount ? `${clientCount} portal hesabı aktivdir` : "Portal axını yeni başlayır",
+      tone: sentProposals > 0 ? "accent" : "neutral",
     },
     {
-      label: "Kalkulyator",
-      href: "/admin/calculator",
-      description: "Qiymet mentiqi, xidmetler, elaveler ve diller uzre metnler.",
-      stat: calculatorConfig ? `${calculatorConfig.config.services.length} xidmet` : "Ayar yoxdur",
-      note: calculatorConfig
-        ? `${calculatorConfig.config.designOptions.length} dizayn secimi hazirdir`
-        : "Evvelce kalkulyator ayarini yarat",
-    },
-    {
-      label: "Elaqe melumatlari",
-      href: "/admin/settings",
-      description: "Telefon, WhatsApp, Instagram ve is saatlari.",
-      stat: siteSettings?.phone ? "Elaqe hazirdir" : "Melumat catismir",
-      note: siteSettings?.businessHours || "Is saatlari daxil edilmeyib",
+      label: "Review mərhələsində layihə",
+      value: String(reviewProjects),
+      detail:
+        reviewProjects > 0
+          ? "Təhvil və ya yoxlama gözləyən layihələr buradadır."
+          : "Review mərhələsində gözləyən layihə yoxdur.",
+      href: "/admin/sales/projects",
+      tone: reviewProjects > 0 ? "accent" : "neutral",
     },
   ];
 
-  const recentMessages: DashboardRecentItem[] = latestMessages.map((message) => ({
-    title: message.name,
-    meta: `${getLeadSourceLabel(message.source ?? "contact")} - ${getLeadStatusLabel(message.status ?? "new")} - ${formatDate(message.createdAt)}`,
-    href: "/admin/sales/messages",
-  }));
+  const actionLanes: DashboardActionLane[] = [
+    {
+      eyebrow: "Satış masası",
+      title:
+        newLeads > 0
+          ? `${formatCount(newLeads, "yeni lead", "yeni lead")} cavab gözləyir`
+          : "CRM sakitdir, yeni lead növbəsi təmizdir",
+      detail:
+        overdueFollowUps > 0
+          ? `${formatCount(overdueFollowUps, "follow-up", "follow-up")} vaxtını keçib. Bu hissəni əvvəl bağlamaq yaxşı olar.`
+          : "Yeni mesajlar, follow-up və conversion axını tək mərkəzdən görünür.",
+      href: "/admin/sales/messages",
+      cta: "Lead-lərə keç",
+      stat: `${leadCount} ümumi müraciət`,
+      tone: newLeads > 0 || overdueFollowUps > 0 ? "danger" : "success",
+    },
+    {
+      eyebrow: "Proposal və layihə axını",
+      title:
+        sentProposals > 0
+          ? `${formatCount(sentProposals, "təklif")} cavab gözləyir`
+          : `${formatCount(activeProjects, "aktiv layihə")} idarə olunur`,
+      detail:
+        draftProposals > 0
+          ? `${formatCount(draftProposals, "draft təklif")} göndərilməyə hazırdır.`
+          : reviewProjects > 0
+            ? `${formatCount(reviewProjects, "layihə")} review mərhələsindədir.`
+            : "Təklif, project və portal axını balanslı görünür.",
+      href: "/admin/sales/projects",
+      cta: "Layihələri aç",
+      stat: `${proposalCount} təklif / ${projectCount} layihə`,
+      tone: sentProposals > 0 || draftProposals > 0 || reviewProjects > 0 ? "accent" : "success",
+    },
+    {
+      eyebrow: "Məzmun və görünürlük",
+      title:
+        draftInsights > 0
+          ? `${formatCount(draftInsights, "draft məqalə")} yayın gözləyir`
+          : "Məzmun tərəfi nəzarət altındadır",
+      detail:
+        featuredCount === 0
+          ? "Ana səhifə üçün seçilən layihə yoxdur. Hero və portfolio axınını tamamla."
+          : localizedInsightCount < latestInsights.length
+            ? "Son məqalələrin bir qismi hələ 3 dildə tamamlanmayıb."
+            : "Blog, ana səhifə və SEO məzmunu eyni paneldən idarə oluna bilir.",
+      href: draftInsights > 0 ? "/admin/blog" : "/admin/homepage",
+      cta: draftInsights > 0 ? "Bloqa keç" : "Ana səhifəni aç",
+      stat: `${publishedInsights} yayında / ${portfolioCount} portfolio`,
+      tone:
+        draftInsights > 0 || featuredCount === 0 || localizedInsightCount < latestInsights.length
+          ? "accent"
+          : "success",
+    },
+  ];
 
-  const recentPosts: DashboardRecentItem[] = latestInsights.map((entry) => ({
-    title: findFirstLocalizedTitle(entry.translations),
-    meta: `${entry.published ? "Paylasilib" : "Draft"} - ${countReadyLocales(entry.translations)}/3 dil hazirdir`,
-    href: "/admin/blog",
-  }));
+  const workspaceHealth: DashboardWorkspaceCard[] = [
+    {
+      label: "CRM və satış",
+      href: "/admin/sales/messages",
+      description: "Yeni lead, follow-up və source axını burada bağlanır.",
+      stat: newLeads > 0 ? `${newLeads} yeni lead` : "Növbə təmizdir",
+      note:
+        overdueFollowUps > 0
+          ? `${overdueFollowUps} follow-up gecikib`
+          : "Yeni follow-up problemi görünmür",
+      health: newLeads > 0 || overdueFollowUps > 0 ? "attention" : "healthy",
+    },
+    {
+      label: "Proposal və layihələr",
+      href: "/admin/sales/projects",
+      description: "Təklif, project və client portal axını eyni yerdədir.",
+      stat: `${activeProjects} aktiv layihə`,
+      note:
+        sentProposals > 0
+          ? `${sentProposals} təklif cavab gözləyir`
+          : `${approvedProposals} təklif təsdiqlənib`,
+      health: sentProposals > 0 || reviewProjects > 0 ? "progress" : "healthy",
+    },
+    {
+      label: "Ana səhifə və portfolio",
+      href: "/admin/homepage",
+      description: "Hero, əsas bloklar və ana səhifəyə çıxan layihələr.",
+      stat: homepageContent ? "Ana səhifə hazırdır" : "Setup gözləyir",
+      note:
+        featuredCount > 0
+          ? `${featuredCount} layihə ana səhifədə göstərilir`
+          : "Ana səhifə üçün seçilən portfolio yoxdur",
+      health: homepageContent && featuredCount > 0 ? "healthy" : "attention",
+    },
+    {
+      label: "Blog və SEO",
+      href: "/admin/blog",
+      description: "Çoxdilli məqalələr, slug-lar və cover axını.",
+      stat: `${publishedInsights} yayın / ${draftInsights} draft`,
+      note:
+        latestInsights.length > 0
+          ? `${localizedInsightCount}/${latestInsights.length} son məqalə 3 dilə hazırdır`
+          : "Hələ məqalə yaradılmayıb",
+      health: draftInsights > 0 ? "progress" : "healthy",
+    },
+    {
+      label: "Kalkulyator və teklif axını",
+      href: "/admin/calculator",
+      description: "Qiymət məntiqi, lead capture və PDF proposal.",
+      stat: calculatorConfig ? `${calculatorConfig.config.services.length} xidmət` : "Qurulmayıb",
+      note: `${calculatorLeads} kalkulyator müraciəti toplanıb`,
+      health: calculatorConfig ? "healthy" : "attention",
+    },
+    {
+      label: "Analytics və əlaqə kanalları",
+      href: analyticsReady ? "/admin/analytics" : "/admin/settings",
+      description: "GA4 izləmə, telefon, WhatsApp və sosial girişlər.",
+      stat: analyticsReady ? "GA4 bağlıdır" : "Analytics setup lazımdır",
+      note: contactChannelsReady ? "Əlaqə kanalları tamamdır" : "Əlaqə məlumatlarında boşluq var",
+      health: analyticsReady && contactChannelsReady ? "healthy" : "attention",
+    },
+  ];
+
+  const recentActivity: DashboardActivityItem[] = [
+    ...latestMessages.map((message) => ({
+      title: message.name,
+      meta: `${getLeadSourceLabel(message.source ?? "contact")} · ${getLeadStatusLabel(message.status ?? "new")} · ${formatDate(message.updatedAt ?? message.createdAt)}`,
+      href: "/admin/sales/messages",
+      kind: "Lead",
+      timestamp: new Date(message.updatedAt ?? message.createdAt ?? now).getTime(),
+    })),
+    ...latestProjects.map((project) => ({
+      title: project.title,
+      meta: `${project.status.replaceAll("_", " ")} · ${formatDate(project.updatedAt)}`,
+      href: "/admin/sales/projects",
+      kind: "Layihə",
+      timestamp: new Date(project.updatedAt ?? project.createdAt ?? now).getTime(),
+    })),
+    ...latestInsights.map((entry) => ({
+      title: findFirstLocalizedTitle(entry.translations),
+      meta: `${entry.published ? "Yayında" : "Draft"} · ${countReadyLocales(entry.translations)}/3 dil · ${formatDate(entry.updatedAt)}`,
+      href: "/admin/blog",
+      kind: "Məzmun",
+      timestamp: new Date(entry.updatedAt ?? entry.createdAt ?? now).getTime(),
+    })),
+  ]
+    .sort((left, right) => right.timestamp - left.timestamp)
+    .slice(0, 8);
 
   const checklist: DashboardChecklistItem[] = [
     {
-      label: "Ana sehife mezmunu hazirdir",
+      label: "Ana səhifə məzmunu hazırdır",
       complete: Boolean(homepageContent),
       detail: homepageContent
-        ? `AZ ucun ${homepageContent.content.az.serviceItems.length} xidmet karti var`
-        : "Ana sehife singleton-u hele yaradilmiyib",
+        ? `${homepageContent.content.az.serviceItems.length} xidmət kartı doldurulub`
+        : "Hero və əsas bloklar üçün singleton məzmun yaradılmalıdır",
+      href: "/admin/homepage",
     },
     {
-      label: "Ana sehife ucun secilen layiheler var",
-      complete: Boolean(featuredDoc?.projectIds?.length),
-      detail: featuredDoc?.projectIds?.length
-        ? `${featuredDoc.projectIds.length} layihe ana sehife ucun secilib`
-        : "Secilenler modulunda layihe sec",
-    },
-    {
-      label: "Elaqe melumatlari tamamdir",
-      complete: Boolean(siteSettings?.phone && siteSettings?.whatsapp && siteSettings?.instagram),
+      label: "Ana səhifə üçün seçilən layihələr var",
+      complete: featuredCount > 0,
       detail:
-        siteSettings?.phone && siteSettings?.whatsapp && siteSettings?.instagram
-          ? "Telefon, WhatsApp ve Instagram doldurulub"
-          : "Public elaqe kanallarindan biri ve ya bir nechesi bosdur",
+        featuredCount > 0
+          ? `${featuredCount} portfolio kartı ön plana çıxarılıb`
+          : "Portfolio modulunda ana səhifə üçün layihə seç",
+      href: "/admin/portfolio",
     },
     {
-      label: "Coxdilli meqale ehatesi",
-      complete: latestInsights.every((entry) => countReadyLocales(entry.translations) === 3),
+      label: "Əlaqə kanalları tamamdır",
+      complete: contactChannelsReady,
+      detail: contactChannelsReady
+        ? "Telefon, WhatsApp və Instagram doldurulub"
+        : "Public əlaqə kanallarından biri və ya bir neçəsi boşdur",
+      href: "/admin/settings",
+    },
+    {
+      label: "GA4 Data API hazırdır",
+      complete: analyticsReady,
+      detail: analyticsReady
+        ? "Admin içində canlı trafik xülasəsi görünəcək"
+        : "GA4 Property ID və service account məlumatlarını tamamla",
+      href: "/admin/analytics",
+    },
+    {
+      label: "Son məqalələr 3 dildə tamamlanıb",
+      complete: latestInsights.length > 0 && localizedInsightCount === latestInsights.length,
       detail: latestInsights.length
-        ? `${latestInsights.filter((entry) => countReadyLocales(entry.translations) === 3).length}/${latestInsights.length} son meqale tam lokallasdirilib`
-        : "Yoxlamaq ucun hele meqale yoxdur",
+        ? `${localizedInsightCount}/${latestInsights.length} son məqalə tam lokallaşdırılıb`
+        : "Yoxlama üçün hələ məqalə yoxdur",
+      href: "/admin/blog",
+    },
+    {
+      label: "Kalkulyator satış üçün hazırdır",
+      complete: Boolean(calculatorConfig),
+      detail: calculatorConfig
+        ? `${calculatorConfig.config.designOptions.length} dizayn seçimi və ${calculatorLeads} lead tarixi var`
+        : "Qiymət mühərriki üçün əsas config saxlanmayıb",
+      href: "/admin/calculator",
     },
   ];
 
   return {
-    metrics,
-    modules,
-    recentMessages,
-    recentPosts,
+    snapshots,
+    pulse,
+    actionLanes,
+    workspaceHealth,
+    recentActivity,
     checklist,
   };
 }
