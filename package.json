@@ -10,6 +10,7 @@
     "test": "node --test --experimental-strip-types"
   },
   "dependencies": {
+    "@swc/helpers": "^0.5.20",
     "cloudinary": "^2.9.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.6.0",
