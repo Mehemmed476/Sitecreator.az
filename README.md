@@ -32,4 +32,4 @@ See `DEPLOY.md` for:
 
 
 
-Mehemmed yaxsi oglandi
+Mehemmed yaxsi oglandi Conii
