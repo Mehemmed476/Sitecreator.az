@@ -53,3 +53,24 @@ export async function uploadProjectChatAttachments(files: File[]) {
     })
   );
 }
+
+export async function deleteProjectChatAttachments(
+  attachments: Array<{ publicId?: string | null; resourceType?: string | null }>
+) {
+  const targets = attachments.filter((attachment) => attachment.publicId);
+
+  if (!targets.length) {
+    return;
+  }
+
+  const cloudinary = getCloudinary();
+
+  await Promise.all(
+    targets.map((attachment) =>
+      cloudinary.uploader.destroy(attachment.publicId!, {
+        resource_type: attachment.resourceType || "auto",
+        invalidate: true,
+      })
+    )
+  );
+}

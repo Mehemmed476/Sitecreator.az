@@ -24,3 +24,11 @@ export function createProject(data: Partial<IProject>) {
 export function listProjectsWithClients() {
   return Project.find().sort({ updatedAt: -1 }).populate("clientId").lean();
 }
+
+export function countProjectsForClient(clientId: string | Types.ObjectId) {
+  return Project.countDocuments({ clientId });
+}
+
+export function deleteProjectById(id: string | Types.ObjectId) {
+  return Project.findByIdAndDelete(id);
+}

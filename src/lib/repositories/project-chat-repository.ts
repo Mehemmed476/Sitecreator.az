@@ -12,3 +12,7 @@ export function listRecentProjectMessages(limit = 500) {
 export function createProjectChatMessage(data: Partial<IProjectChatMessage>) {
   return ProjectChatMessage.create(data);
 }
+
+export function deleteProjectMessages(projectId: string | Types.ObjectId) {
+  return ProjectChatMessage.deleteMany({ projectId });
+}

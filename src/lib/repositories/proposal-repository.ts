@@ -20,3 +20,11 @@ export function findProposalsForClient(clientId: Types.ObjectId) {
 export function createProposal(data: Partial<IProposal>) {
   return Proposal.create(data);
 }
+
+export function countProposalsForClient(clientId: string | Types.ObjectId) {
+  return Proposal.countDocuments({ clientId });
+}
+
+export function deleteProposalById(id: string | Types.ObjectId) {
+  return Proposal.findByIdAndDelete(id);
+}

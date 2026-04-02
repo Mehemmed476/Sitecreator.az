@@ -1,6 +1,11 @@
 import { connectDB } from "@/lib/db";
 import { AppError } from "@/lib/errors/app-error";
 import { createLead, deleteLeadById, findLeadById, listLeads } from "@/lib/repositories/contact-repository";
+import { deleteProjectMessages, listProjectMessages } from "@/lib/repositories/project-chat-repository";
+import { countProjectsForClient, deleteProjectById } from "@/lib/repositories/project-repository";
+import { countProposalsForClient, deleteProposalById } from "@/lib/repositories/proposal-repository";
+import { deleteUserById, findUserDocumentById } from "@/lib/repositories/user-repository";
+import { deleteProjectChatAttachments } from "@/lib/project-chat-attachments";
 import { createLeadInputSchema, updateLeadInputSchema, type CreateLeadInput } from "@/lib/validators/lead-validator";
 
 function parseFollowUpDate(value: string | null | undefined) {
@@ -149,5 +154,43 @@ export async function updateLeadEntry(id: string, payload: unknown) {
 
 export async function deleteLeadEntry(id: string) {
   await connectDB();
+  const lead = await findLeadById(id);
+
+  if (!lead) {
+    throw new AppError("Lead not found", 404);
+  }
+
+  if (lead.projectId) {
+    const projectMessages = await listProjectMessages(lead.projectId);
+    const attachments = projectMessages.flatMap((message) => message.attachments ?? []);
+
+    await deleteProjectChatAttachments(attachments);
+    await deleteProjectMessages(lead.projectId);
+    await deleteProjectById(lead.projectId);
+  }
+
+  if (lead.proposalId) {
+    await deleteProposalById(lead.proposalId);
+  }
+
+  if (lead.clientUserId) {
+    const client = await findUserDocumentById(lead.clientUserId.toString());
+
+    if (client?.role === "client") {
+      client.leadIds = client.leadIds.filter((leadId) => leadId.toString() !== lead._id.toString());
+
+      const [remainingProjects, remainingProposals] = await Promise.all([
+        countProjectsForClient(client._id),
+        countProposalsForClient(client._id),
+      ]);
+
+      if (!client.leadIds.length && remainingProjects === 0 && remainingProposals === 0) {
+        await deleteUserById(client._id.toString());
+      } else {
+        await client.save();
+      }
+    }
+  }
+
   await deleteLeadById(id);
 }

@@ -19,3 +19,7 @@ export function createUser(data: Partial<IUser>) {
 export function countClientUsers() {
   return User.countDocuments({ role: "client" });
 }
+
+export function deleteUserById(id: string) {
+  return User.findByIdAndDelete(id);
+}
