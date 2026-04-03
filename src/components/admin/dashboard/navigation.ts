@@ -77,6 +77,14 @@ export const adminTabs: AdminTabConfig[] = [
     icon: Layers3,
   },
   {
+    id: "packages",
+    href: "/admin/packages",
+    group: "Məzmun",
+    label: "Hazır paketlər",
+    description: "Paket səhifələri, qiymət və Instagram draftları",
+    icon: Layers3,
+  },
+  {
     id: "portfolio",
     href: "/admin/portfolio",
     group: "Məzmun",
@@ -176,6 +184,16 @@ const workspaceMeta: Record<AdminTab, AdminWorkspaceMeta> = {
       "Kart mətni, hero, nəticələr, FAQ, CTA və SEO hissələrini xidmət bazında idarə et.",
     stats: [
       { label: "Fokus", value: "Service detail pages" },
+      { label: "Dillər", value: "AZ / EN / RU" },
+    ],
+  },
+  packages: {
+    eyebrow: "Hazır paketlər",
+    title: "Sahəyə uyğun paket səhifələrini və promo məzmununu idarə et",
+    description:
+      "Restoran, klinika, kurs və e-commerce kimi paketlər üçün səhifə mətni, slug, cover, qiymət və Instagram draftlarını bir yerdən yenilə.",
+    stats: [
+      { label: "Fokus", value: "Packages + Instagram drafts" },
       { label: "Dillər", value: "AZ / EN / RU" },
     ],
   },

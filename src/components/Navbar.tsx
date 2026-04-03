@@ -5,8 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Menu, X, Code2, ChevronDown } from "lucide-react";
-import { getLocalizedText } from "@/lib/price-calculator";
-import { usePriceCalculatorConfig } from "./usePriceCalculatorConfig";
 import { useServicePagesConfig } from "./useServicePagesConfig";
 import { getLocalizedServiceContent } from "@/lib/service-pages";
 
@@ -14,7 +12,7 @@ const navLinks = [
   { href: "/", key: "home" },
   { href: "/portfolio", key: "portfolio" },
   { href: "/blog", key: "blog" },
-  { href: "/price-calculator", key: "packages" },
+  { href: "/packages", key: "packages" },
   { href: "/about", key: "about" },
   { href: "/contact", key: "contact" },
 ] as const;
@@ -33,7 +31,6 @@ export function Navbar() {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const servicesRef = useRef<HTMLDivElement>(null);
-  const { config } = usePriceCalculatorConfig();
   const { config: servicesConfig } = useServicePagesConfig();
   const serviceItems = useMemo(
     () =>
@@ -162,9 +159,7 @@ export function Navbar() {
                       : "text-muted hover:text-foreground hover:bg-surface-hover"
                   }`}
               >
-                {link.key === "packages"
-                  ? getLocalizedText(locale as "az" | "en" | "ru", config.copy.navLabel)
-                  : t(link.key)}
+                {t(link.key)}
                 {isActive && (
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2
                     h-0.5 w-5 rounded-full bg-primary" />
@@ -276,9 +271,7 @@ export function Navbar() {
                       : "text-muted hover:text-foreground hover:bg-surface-hover"
                   }`}
               >
-                {link.key === "packages"
-                  ? getLocalizedText(locale as "az" | "en" | "ru", config.copy.navLabel)
-                  : t(link.key)}
+                {t(link.key)}
               </Link>
             );
           })}

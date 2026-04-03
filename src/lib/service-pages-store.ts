@@ -36,7 +36,7 @@ export async function saveServicePagesConfig(config: unknown): Promise<ServicePa
   await ServicePagesConfigModel.findOneAndUpdate(
     { singletonKey: "main" },
     { singletonKey: "main", config: nextConfig },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: "after" }
   );
 
   return nextConfig;

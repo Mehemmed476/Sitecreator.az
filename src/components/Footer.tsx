@@ -12,8 +12,6 @@ import {
   Clock3,
 } from "lucide-react";
 import { useSiteSettings } from "./useSiteSettings";
-import { getLocalizedText } from "@/lib/price-calculator";
-import { usePriceCalculatorConfig } from "./usePriceCalculatorConfig";
 import { useServicePagesConfig } from "./useServicePagesConfig";
 import { getLocalizedServiceContent } from "@/lib/service-pages";
 
@@ -22,7 +20,7 @@ const footerNavLinks = [
   { href: "/services", key: "services" },
   { href: "/portfolio", key: "portfolio" },
   { href: "/blog", key: "blog" },
-  { href: "/price-calculator", key: "packages" },
+  { href: "/packages", key: "packages" },
   { href: "/about", key: "about" },
   { href: "/contact", key: "contact" },
 ] as const;
@@ -37,7 +35,6 @@ export function Footer() {
   const t = useTranslations("footer");
   const nav = useTranslations("nav");
   const { settings } = useSiteSettings();
-  const { config } = usePriceCalculatorConfig();
   const { config: servicesConfig } = useServicePagesConfig();
   const serviceItems = servicesConfig.services.slice(0, 5).map((service) => ({
     title: getLocalizedServiceContent(service, locale as "az" | "en" | "ru").cardTitle,
@@ -133,9 +130,7 @@ export function Footer() {
                     href={link.href}
                     className="text-sm text-muted transition-colors duration-200 hover:text-primary"
                   >
-                    {link.key === "packages"
-                      ? getLocalizedText(locale as "az" | "en" | "ru", config.copy.navLabel)
-                      : nav(link.key)}
+                    {nav(link.key)}
                   </Link>
                 </li>
               ))}

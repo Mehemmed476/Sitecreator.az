@@ -34,9 +34,8 @@ export async function savePriceCalculatorConfig(
   await PriceCalculatorConfigModel.findOneAndUpdate(
     { singletonKey: "main" },
     { singletonKey: "main", config },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: "after" }
   );
 
   return config;
 }
-

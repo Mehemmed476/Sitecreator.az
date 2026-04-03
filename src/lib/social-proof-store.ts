@@ -32,7 +32,7 @@ export async function saveSocialProofContent(input: unknown): Promise<SocialProo
   await SocialProofContentModel.findOneAndUpdate(
     { singletonKey: "main" },
     { singletonKey: "main", content },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: "after" }
   );
 
   return content;

@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest) {
     await SiteSettingsModel.findOneAndUpdate(
       { singletonKey: "main" },
       { singletonKey: "main", ...nextSettings },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
 
     return NextResponse.json(nextSettings);

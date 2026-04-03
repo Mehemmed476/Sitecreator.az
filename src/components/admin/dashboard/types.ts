@@ -95,6 +95,7 @@ export type AdminTab =
   | "socialProof"
   | "media"
   | "services"
+  | "packages"
   | "portfolio"
   | "blog"
   | "sales"

@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest) {
     await HomepageContentModel.findOneAndUpdate(
       { singletonKey: "main" },
       { singletonKey: "main", content: nextContent },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
 
     return NextResponse.json(nextContent);

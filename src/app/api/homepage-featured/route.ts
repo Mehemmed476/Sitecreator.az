@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest) {
     await HomepageFeatured.findOneAndUpdate(
       {},
       { projectIds: normalized },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
 
     return NextResponse.json({ ok: true });

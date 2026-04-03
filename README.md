@@ -29,7 +29,3 @@ See `DEPLOY.md` for:
 - `pm2` config
 - `nginx` reverse proxy setup
 - GitHub Actions CI/CD pipeline
-
-
-
-Mehemmed yaxsi oglandi Conii
