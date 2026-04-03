@@ -50,6 +50,14 @@ export interface LeadRecord {
     lineItems?: Array<{ label: string; amount: number }>;
     selections?: Record<string, unknown>;
   };
+  packageRequest?: {
+    id?: string;
+    title?: string;
+    slug?: string;
+    category?: string;
+    locale?: string;
+    startingPrice?: number;
+  };
 }
 
 export interface AdminProjectRecord {

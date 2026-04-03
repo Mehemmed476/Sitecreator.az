@@ -29,6 +29,15 @@ interface CalculatorSnapshot {
   selections?: Record<string, unknown>;
 }
 
+interface PackageRequestSnapshot {
+  id?: string;
+  title?: string;
+  slug?: string;
+  category?: string;
+  locale?: string;
+  startingPrice?: number;
+}
+
 export interface ILeadActivity {
   type: LeadActivityType;
   title: string;
@@ -53,6 +62,7 @@ export interface IContact extends Document {
   convertedAt?: Date | null;
   isRead: boolean;
   calculator?: CalculatorSnapshot;
+  packageRequest?: PackageRequestSnapshot;
   activities: ILeadActivity[];
   createdAt: Date;
   updatedAt: Date;
@@ -106,6 +116,14 @@ const ContactSchema = new Schema<IContact>(
         },
       ],
       selections: { type: Schema.Types.Mixed },
+    },
+    packageRequest: {
+      id: { type: String, trim: true },
+      title: { type: String, trim: true },
+      slug: { type: String, trim: true },
+      category: { type: String, trim: true },
+      locale: { type: String, trim: true },
+      startingPrice: { type: Number },
     },
     activities: { type: [LeadActivitySchema], default: [] },
   },

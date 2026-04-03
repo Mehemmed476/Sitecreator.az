@@ -9,26 +9,26 @@ import {
   AdminSectionHeader,
 } from "@/components/admin/dashboard/shared";
 import {
-  BulletsEditor,
-  FaqEditor,
   Field,
-  InfoListEditor,
   SectionCard,
 } from "@/components/admin/dashboard/content-editor-shared";
+import {
+  buildPackagePresetSummary,
+  type PackageCalculatorPreset,
+} from "@/lib/package-calculator-preset";
 import {
   createEmptyPackageRecord,
   createInstagramDraftForPackage,
   defaultPackageSolutionsConfig,
   packageLocales,
   sanitizePackageSolutionsConfig,
-  type PackageFaqItem,
   type PackageInstagramDraft,
   type PackageLocale,
   type PackageLocaleContent,
-  type PackageInfoItem,
   type PackageSolutionRecord,
   type PackageSolutionsConfig,
 } from "@/lib/package-solutions";
+import { defaultPriceCalculatorConfig, getLocalizedText, sanitizePriceCalculatorConfig, type PriceCalculatorConfig } from "@/lib/price-calculator";
 
 type PackageSolutionsMode = "content" | "packages" | "instagram";
 
@@ -79,8 +79,37 @@ function cloneConfig(config: PackageSolutionsConfig): PackageSolutionsConfig {
   };
 }
 
+function syncPackageWithCalculator(
+  pkg: PackageSolutionRecord,
+  calculatorConfig: PriceCalculatorConfig
+): PackageSolutionRecord {
+  const nextPackage = clonePackageRecord(pkg);
+
+  for (const locale of packageLocales) {
+    const summary = buildPackagePresetSummary(locale, calculatorConfig, nextPackage.calculatorPreset);
+    nextPackage.startingPrice = summary.startingPrice;
+    nextPackage.content[locale].includedModules = summary.includedModules;
+    nextPackage.content[locale].timelineLabel = summary.timelineLabel;
+  }
+
+  return nextPackage;
+}
+
+function syncConfigWithCalculator(
+  config: PackageSolutionsConfig,
+  calculatorConfig: PriceCalculatorConfig
+): PackageSolutionsConfig {
+  return {
+    ...config,
+    packages: config.packages.map((item) => syncPackageWithCalculator(item, calculatorConfig)),
+  };
+}
+
 export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }) {
   const [config, setConfig] = useState<PackageSolutionsConfig>(defaultPackageSolutionsConfig);
+  const [calculatorConfig, setCalculatorConfig] = useState<PriceCalculatorConfig>(
+    defaultPriceCalculatorConfig
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeLocale, setActiveLocale] = useState<PackageLocale>("az");
@@ -95,18 +124,32 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
       setError(null);
       setSuccess(null);
 
-      const response = await fetch("/api/package-solutions", {
-        credentials: "include",
-        cache: "no-store",
-      });
+      const [response, calculatorResponse] = await Promise.all([
+        fetch("/api/package-solutions", {
+          credentials: "include",
+          cache: "no-store",
+        }),
+        fetch("/api/price-calculator", {
+          credentials: "include",
+          cache: "no-store",
+        }),
+      ]);
       const data = await response.json().catch(() => null);
+      const calculatorData = await calculatorResponse.json().catch(() => null);
 
       if (!response.ok) {
         setError(response.status === 401 ? "Zəhmət olmasa yenidən daxil olun." : "Paketlər yüklənmədi.");
         return;
       }
 
-      const nextConfig = cloneConfig(sanitizePackageSolutionsConfig(data));
+      const nextCalculatorConfig = calculatorResponse.ok
+        ? sanitizePriceCalculatorConfig(calculatorData)
+        : defaultPriceCalculatorConfig;
+      const nextConfig = syncConfigWithCalculator(
+        cloneConfig(sanitizePackageSolutionsConfig(data)),
+        nextCalculatorConfig
+      );
+      setCalculatorConfig(nextCalculatorConfig);
       setConfig(nextConfig);
       setActivePackageId(nextConfig.packages[0]?.id ?? "");
       setPreviewVersion(Date.now());
@@ -144,7 +187,9 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
 
     setConfig((current) => ({
       ...current,
-      packages: current.packages.map((item) => (item.id === activePackage.id ? updateFn(item) : item)),
+      packages: current.packages.map((item) =>
+        item.id === activePackage.id ? syncPackageWithCalculator(updateFn(item), calculatorConfig) : item
+      ),
     }));
   }
 
@@ -175,84 +220,15 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
     }));
   }
 
-  function updateHighlight(index: number, field: keyof PackageInfoItem, value: string) {
+  function updateCalculatorPreset<K extends keyof PackageCalculatorPreset>(
+    key: K,
+    value: PackageCalculatorPreset[K]
+  ) {
     updatePackage((pkg) => ({
       ...pkg,
-      content: {
-        ...pkg.content,
-        [activeLocale]: {
-          ...pkg.content[activeLocale],
-          highlights: pkg.content[activeLocale].highlights.map((item, itemIndex) =>
-            itemIndex === index ? { ...item, [field]: value } : item
-          ),
-        },
-      },
-    }));
-  }
-
-  function addHighlight() {
-    updatePackage((pkg) => ({
-      ...pkg,
-      content: {
-        ...pkg.content,
-        [activeLocale]: {
-          ...pkg.content[activeLocale],
-          highlights: [...pkg.content[activeLocale].highlights, { title: "", description: "" }],
-        },
-      },
-    }));
-  }
-
-  function removeHighlight(index: number) {
-    updatePackage((pkg) => ({
-      ...pkg,
-      content: {
-        ...pkg.content,
-        [activeLocale]: {
-          ...pkg.content[activeLocale],
-          highlights: pkg.content[activeLocale].highlights.filter((_, itemIndex) => itemIndex !== index),
-        },
-      },
-    }));
-  }
-
-  function updateFaq(index: number, field: keyof PackageFaqItem, value: string) {
-    updatePackage((pkg) => ({
-      ...pkg,
-      content: {
-        ...pkg.content,
-        [activeLocale]: {
-          ...pkg.content[activeLocale],
-          faqItems: pkg.content[activeLocale].faqItems.map((item, itemIndex) =>
-            itemIndex === index ? { ...item, [field]: value } : item
-          ),
-        },
-      },
-    }));
-  }
-
-  function addFaq() {
-    updatePackage((pkg) => ({
-      ...pkg,
-      content: {
-        ...pkg.content,
-        [activeLocale]: {
-          ...pkg.content[activeLocale],
-          faqItems: [...pkg.content[activeLocale].faqItems, { question: "", answer: "" }],
-        },
-      },
-    }));
-  }
-
-  function removeFaq(index: number) {
-    updatePackage((pkg) => ({
-      ...pkg,
-      content: {
-        ...pkg.content,
-        [activeLocale]: {
-          ...pkg.content[activeLocale],
-          faqItems: pkg.content[activeLocale].faqItems.filter((_, itemIndex) => itemIndex !== index),
-        },
+      calculatorPreset: {
+        ...pkg.calculatorPreset,
+        [key]: value,
       },
     }));
   }
@@ -297,7 +273,10 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
   function addPackage() {
     const nextOrder = config.packages.length + 1;
     const nextId = `package-${nextOrder}`;
-    const nextPackage = createEmptyPackageRecord(nextId, nextOrder);
+    const nextPackage = syncPackageWithCalculator(
+      createEmptyPackageRecord(nextId, nextOrder),
+      calculatorConfig
+    );
 
     setConfig((current) => ({
       ...current,
@@ -364,7 +343,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nextConfig),
+        body: JSON.stringify(syncConfigWithCalculator(nextConfig, calculatorConfig)),
       });
 
       const data = await response.json().catch(() => null);
@@ -413,7 +392,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
+        body: JSON.stringify(syncConfigWithCalculator(config, calculatorConfig)),
       });
 
       const data = await response.json().catch(() => null);
@@ -436,6 +415,10 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
   }
 
   const activeContent = activePackage?.content[activeLocale] ?? null;
+  const activePresetSummary =
+    activePackage && activeContent
+      ? buildPackagePresetSummary(activeLocale, calculatorConfig, activePackage.calculatorPreset)
+      : null;
   const instagramDraft = activeContent?.instagram;
   const previewFrames =
     activePackage && instagramDraft
@@ -583,20 +566,20 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
                   </div>
                 ))}
               </SectionCard>
-
-              <SectionCard title="Paket məlumatı">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="ID" value={activePackage.id} onChange={(value) => updatePackage((pkg) => ({ ...pkg, id: value }))} />
-                  <Field label="Kateqoriya" value={activePackage.category} onChange={(value) => updatePackage((pkg) => ({ ...pkg, category: value }))} />
-                  <Field label="Cover image URL" value={activePackage.coverImageUrl} onChange={(value) => updatePackage((pkg) => ({ ...pkg, coverImageUrl: value }))} />
-                  <Field label="Start qiymət" value={String(activePackage.startingPrice)} onChange={(value) => updatePackage((pkg) => ({ ...pkg, startingPrice: Number(value) || 0 }))} />
-                </div>
-              </SectionCard>
             </>
           ) : null}
 
           {mode === "packages" ? (
             <>
+              <SectionCard title="Paket ayarları">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="ID" value={activePackage.id} onChange={(value) => updatePackage((pkg) => ({ ...pkg, id: value }))} />
+                  <Field label="Kateqoriya" value={activePackage.category} onChange={(value) => updatePackage((pkg) => ({ ...pkg, category: value }))} />
+                  <Field label="Cover image URL" value={activePackage.coverImageUrl} onChange={(value) => updatePackage((pkg) => ({ ...pkg, coverImageUrl: value }))} />
+                  <Field label="Start qiymət" value={`₼ ${activePackage.startingPrice.toLocaleString("en-US")}`} onChange={() => {}} />
+                </div>
+              </SectionCard>
+
               <SectionCard title={`Lokal məzmun • ${localeLabels[activeLocale]}`}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Slug" value={activePackage.slugs[activeLocale]} onChange={(value) => updateSlug(activeLocale, value)} />
@@ -605,14 +588,6 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
                   <Field label="Hero badge" value={activeContent.heroBadge} onChange={(value) => updateLocaleField(activeLocale, "heroBadge", value)} />
                   <Field label="Hero başlıq" value={activeContent.heroTitle} onChange={(value) => updateLocaleField(activeLocale, "heroTitle", value)} />
                   <Field label="Hero təsviri" value={activeContent.heroDescription} onChange={(value) => updateLocaleField(activeLocale, "heroDescription", value)} multiline />
-                  <Field label="Audience başlığı" value={activeContent.audienceTitle} onChange={(value) => updateLocaleField(activeLocale, "audienceTitle", value)} />
-                  <Field label="Audience təsviri" value={activeContent.audienceDescription} onChange={(value) => updateLocaleField(activeLocale, "audienceDescription", value)} multiline />
-                  <Field label="Perfect for başlığı" value={activeContent.perfectForTitle} onChange={(value) => updateLocaleField(activeLocale, "perfectForTitle", value)} />
-                  <Field label="Included başlığı" value={activeContent.includedTitle} onChange={(value) => updateLocaleField(activeLocale, "includedTitle", value)} />
-                  <Field label="Highlights başlığı" value={activeContent.highlightsTitle} onChange={(value) => updateLocaleField(activeLocale, "highlightsTitle", value)} />
-                  <Field label="FAQ başlığı" value={activeContent.faqTitle} onChange={(value) => updateLocaleField(activeLocale, "faqTitle", value)} />
-                  <Field label="FAQ təsviri" value={activeContent.faqDescription} onChange={(value) => updateLocaleField(activeLocale, "faqDescription", value)} multiline />
-                  <Field label="Timeline label" value={activeContent.timelineLabel} onChange={(value) => updateLocaleField(activeLocale, "timelineLabel", value)} />
                   <Field label="Primary CTA" value={activeContent.primaryCta} onChange={(value) => updateLocaleField(activeLocale, "primaryCta", value)} />
                   <Field label="Secondary CTA" value={activeContent.secondaryCta} onChange={(value) => updateLocaleField(activeLocale, "secondaryCta", value)} />
                   <Field label="SEO title" value={activeContent.seoTitle} onChange={(value) => updateLocaleField(activeLocale, "seoTitle", value)} />
@@ -620,56 +595,188 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
                 </div>
               </SectionCard>
 
-              <SectionCard title="Perfect for">
-                <BulletsEditor
-                  bullets={activeContent.perfectFor}
-                  onAdd={() => updateLocaleField(activeLocale, "perfectFor", [...activeContent.perfectFor, ""])}
-                  onRemove={(index) => updateLocaleField(activeLocale, "perfectFor", activeContent.perfectFor.filter((_, itemIndex) => itemIndex !== index))}
-                  onChange={(index, value) =>
-                    updateLocaleField(
-                      activeLocale,
-                      "perfectFor",
-                      activeContent.perfectFor.map((item, itemIndex) => (itemIndex === index ? value : item))
-                    )
-                  }
-                />
+              <SectionCard title="Kalkulyator preset">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium">Xidmət</span>
+                    <select
+                      value={activePackage.calculatorPreset.serviceId}
+                      onChange={(event) =>
+                        updateCalculatorPreset("serviceId", event.target.value as PackageCalculatorPreset["serviceId"])
+                      }
+                      className="site-input w-full"
+                    >
+                      {calculatorConfig.services.map((service) => (
+                        <option key={service.id} value={service.id}>
+                          {getLocalizedText(activeLocale, service.name)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium">
+                      {activePresetSummary?.unitLabel || "Sayı"}
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={activePackage.calculatorPreset.unitCount}
+                      onChange={(event) =>
+                        updateCalculatorPreset("unitCount", Math.max(1, Number(event.target.value) || 1))
+                      }
+                      className="site-input w-full"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium">Dizayn</span>
+                    <select
+                      value={activePackage.calculatorPreset.designId}
+                      onChange={(event) => updateCalculatorPreset("designId", event.target.value)}
+                      className="site-input w-full"
+                    >
+                      {calculatorConfig.designOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {getLocalizedText(activeLocale, option.label)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium">Logo</span>
+                    <select
+                      value={activePackage.calculatorPreset.logoId}
+                      onChange={(event) => updateCalculatorPreset("logoId", event.target.value)}
+                      className="site-input w-full"
+                    >
+                      {calculatorConfig.logoOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {getLocalizedText(activeLocale, option.label)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium">Müddət</span>
+                    <select
+                      value={activePackage.calculatorPreset.timelineId}
+                      onChange={(event) => updateCalculatorPreset("timelineId", event.target.value)}
+                      className="site-input w-full"
+                    >
+                      {calculatorConfig.timelineOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {getLocalizedText(activeLocale, option.label)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium">Dəstək</span>
+                    <select
+                      value={activePackage.calculatorPreset.supportId}
+                      onChange={(event) => updateCalculatorPreset("supportId", event.target.value)}
+                      className="site-input w-full"
+                    >
+                      {calculatorConfig.supportOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {getLocalizedText(activeLocale, option.label)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </SectionCard>
 
-              <SectionCard title="Included modules">
-                <BulletsEditor
-                  bullets={activeContent.includedModules}
-                  onAdd={() => updateLocaleField(activeLocale, "includedModules", [...activeContent.includedModules, ""])}
-                  onRemove={(index) => updateLocaleField(activeLocale, "includedModules", activeContent.includedModules.filter((_, itemIndex) => itemIndex !== index))}
-                  onChange={(index, value) =>
-                    updateLocaleField(
-                      activeLocale,
-                      "includedModules",
-                      activeContent.includedModules.map((item, itemIndex) => (itemIndex === index ? value : item))
-                    )
-                  }
-                />
-              </SectionCard>
-
-              <SectionCard title="Highlights və FAQ">
+              <SectionCard title="Kalkulyator əlavələri">
                 <div className="grid gap-6 xl:grid-cols-2">
-                  <div>
-                    <InfoListEditor
-                      items={activeContent.highlights}
-                      addLabel="Highlight əlavə et"
-                      onAdd={addHighlight}
-                      onRemove={removeHighlight}
-                      onTitleChange={(index, value) => updateHighlight(index, "title", value)}
-                      onDescriptionChange={(index, value) => updateHighlight(index, "description", value)}
-                    />
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-foreground">Layihə əlavələri</div>
+                    <div className="grid gap-3">
+                      {(calculatorConfig.addOnGroups.find((group) => group.id === "build")?.items ?? []).map((item) => {
+                        const checked = activePackage.calculatorPreset.selectedBuild.includes(item.id);
+
+                        return (
+                          <label key={item.id} className="site-card-subtle flex items-start gap-3 rounded-2xl p-4">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                updateCalculatorPreset(
+                                  "selectedBuild",
+                                  checked
+                                    ? activePackage.calculatorPreset.selectedBuild.filter((entry) => entry !== item.id)
+                                    : [...activePackage.calculatorPreset.selectedBuild, item.id]
+                                )
+                              }
+                              className="mt-1 h-4 w-4 rounded border-border bg-transparent accent-[var(--color-primary)]"
+                            />
+                            <span className="text-sm text-foreground">
+                              {getLocalizedText(activeLocale, item.label)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div>
-                    <FaqEditor
-                      items={activeContent.faqItems}
-                      onAdd={addFaq}
-                      onRemove={removeFaq}
-                      onChange={(index, field, value) => updateFaq(index, field, value)}
-                    />
+
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-foreground">SEO əlavələri</div>
+                    <div className="grid gap-3">
+                      {(calculatorConfig.addOnGroups.find((group) => group.id === "seo")?.items ?? []).map((item) => {
+                        const checked = activePackage.calculatorPreset.selectedSeo.includes(item.id);
+
+                        return (
+                          <label key={item.id} className="site-card-subtle flex items-start gap-3 rounded-2xl p-4">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                updateCalculatorPreset(
+                                  "selectedSeo",
+                                  checked
+                                    ? activePackage.calculatorPreset.selectedSeo.filter((entry) => entry !== item.id)
+                                    : [...activePackage.calculatorPreset.selectedSeo, item.id]
+                                )
+                              }
+                              className="mt-1 h-4 w-4 rounded border-border bg-transparent accent-[var(--color-primary)]"
+                            />
+                            <span className="text-sm text-foreground">
+                              {getLocalizedText(activeLocale, item.label)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Avtomatik xülasə">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="site-card-subtle rounded-2xl p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-muted">Start qiymət</div>
+                    <div className="mt-2 text-2xl font-semibold text-foreground">
+                      ₼ {activePackage.startingPrice.toLocaleString("en-US")}
+                    </div>
+                  </div>
+                  <div className="site-card-subtle rounded-2xl p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-muted">Müddət</div>
+                    <div className="mt-2 text-base font-semibold text-foreground">
+                      {activePresetSummary?.timelineLabel || "-"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {(activePresetSummary?.includedModules ?? []).map((item, index) => (
+                    <div key={`${item}-${index}`} className="site-card-subtle rounded-2xl p-4 text-sm text-foreground">
+                      {item}
+                    </div>
+                  ))}
                 </div>
               </SectionCard>
             </>

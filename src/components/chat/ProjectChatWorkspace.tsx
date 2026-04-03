@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { AdminConfirmDialog } from "@/components/admin/dashboard/shared";
 import { ProjectChatPanel } from "@/components/portal/ProjectChatPanel";
 import type { ProjectChatThreadRecord } from "@/lib/project-chat";
 
@@ -31,12 +33,47 @@ export function ProjectChatWorkspace({
   description: string;
   showThreadList?: boolean;
 }) {
+  const [threadItems, setThreadItems] = useState(threads);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(threads[0]?.projectId ?? null);
+  const [clearing, setClearing] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const selectedThread = useMemo(
-    () => threads.find((item) => item.projectId === selectedProjectId) ?? threads[0] ?? null,
-    [selectedProjectId, threads]
+    () => threadItems.find((item) => item.projectId === selectedProjectId) ?? threadItems[0] ?? null,
+    [selectedProjectId, threadItems]
   );
+
+  async function handleClearThread() {
+    if (!selectedThread || viewerRole !== "admin") return;
+
+    try {
+      setClearing(true);
+      const response = await fetch(`/api/projects/${selectedThread.projectId}/messages`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Chat tarixçəsi silinmədi.");
+      }
+
+      setThreadItems((current) =>
+        current.map((thread) =>
+          thread.projectId === selectedThread.projectId
+            ? { ...thread, latestMessage: "", latestMessageAt: null }
+            : thread
+        )
+      );
+      setRefreshKey((current) => current + 1);
+      setConfirmClearOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setClearing(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -99,10 +136,10 @@ export function ProjectChatWorkspace({
         <div className={`space-y-4 ${showThreadList ? "" : "xl:col-span-2"}`}>
           {selectedThread ? (
             <>
-              {!showThreadList && threads.length > 1 ? (
+              {!showThreadList && threadItems.length > 1 ? (
                 <div className="site-card rounded-[24px] p-4">
                   <div className="flex flex-wrap gap-2">
-                    {threads.map((thread) => {
+                    {threadItems.map((thread) => {
                       const isActive = thread.projectId === selectedThread.projectId;
 
                       return (
@@ -133,17 +170,30 @@ export function ProjectChatWorkspace({
                       {selectedThread.serviceName}
                     </p>
                   </div>
-                  <Link
-                    href={`/portal/projects/${selectedThread.projectId}`}
-                    locale={locale}
-                    className="btn-secondary text-sm"
-                  >
-                    Layihəyə bax
-                  </Link>
+                  <div className="flex flex-wrap gap-3">
+                    {viewerRole === "admin" ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmClearOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/15"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Chatı sil
+                      </button>
+                    ) : null}
+                    <Link
+                      href={`/portal/projects/${selectedThread.projectId}`}
+                      locale={locale}
+                      className="btn-secondary text-sm"
+                    >
+                      Layihəyə bax
+                    </Link>
+                  </div>
                 </div>
               </div>
 
               <ProjectChatPanel
+                key={`${selectedThread.projectId}-${refreshKey}`}
                 projectId={selectedThread.projectId}
                 viewerRole={viewerRole}
                 title="Mesajlaşma"
@@ -153,6 +203,18 @@ export function ProjectChatWorkspace({
           ) : null}
         </div>
       </section>
+
+      <AdminConfirmDialog
+        open={confirmClearOpen}
+        title="Chat tarixçəsi silinsin?"
+        description="Bu əməliyyat yalnız seçilmiş layihənin yazışmalarını və attachment-larını siləcək."
+        confirmText="Bəli, sil"
+        cancelText="Ləğv et"
+        confirmTone="danger"
+        loading={clearing}
+        onConfirm={() => void handleClearThread()}
+        onClose={() => setConfirmClearOpen(false)}
+      />
     </div>
   );
 }

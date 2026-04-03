@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { Menu, X, Code2, ChevronDown } from "lucide-react";
+import { Menu, X, Code2, ChevronDown, Calculator } from "lucide-react";
 import { useServicePagesConfig } from "./useServicePagesConfig";
 import { getLocalizedServiceContent } from "@/lib/service-pages";
 
@@ -171,6 +171,13 @@ export function Navbar() {
 
         {/* Right Side */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/price-calculator"
+            className="site-control hidden items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:border-primary hover:text-primary sm:inline-flex"
+          >
+            <Calculator className="h-4 w-4" />
+            <span>{t("calculator")}</span>
+          </Link>
           <LanguageSwitcher />
 
           {/* Mobile Hamburger */}
@@ -196,6 +203,15 @@ export function Navbar() {
           ${mobileOpen ? "max-h-[36rem] border-t border-black/5 dark:border-white/5" : "max-h-0"}`}
         >
         <div className="chrome-panel-solid flex flex-col gap-1 px-4 py-3">
+          <Link
+            href="/price-calculator"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:bg-surface-hover"
+          >
+            <Calculator className="h-4 w-4" />
+            <span>{t("calculator")}</span>
+          </Link>
+
           <Link
             href={homeLink.href}
             onClick={() => setMobileOpen(false)}

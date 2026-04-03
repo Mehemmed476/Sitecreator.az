@@ -2,6 +2,7 @@
 
 import { MessageSquare } from "lucide-react";
 import { type LocaleKey, type PriceCalculatorConfig } from "@/lib/price-calculator";
+import type { PriceCalculatorSelections } from "@/lib/price-calculator-estimate";
 import { PriceCalculatorBenefitsGrid } from "@/components/price-calculator/PriceCalculatorBenefitsGrid";
 import { PriceCalculatorDetailsSection } from "@/components/price-calculator/PriceCalculatorDetailsSection";
 import { PriceCalculatorExtrasSection } from "@/components/price-calculator/PriceCalculatorExtrasSection";
@@ -14,9 +15,11 @@ import { usePriceCalculator } from "@/components/price-calculator/usePriceCalcul
 export function PriceCalculatorClient({
   locale,
   config,
+  initialSelections,
 }: {
   locale: LocaleKey;
   config: PriceCalculatorConfig;
+  initialSelections?: PriceCalculatorSelections;
 }) {
   const {
     safeConfig,
@@ -33,7 +36,7 @@ export function PriceCalculatorClient({
     handleSubmit,
     downloadSummary,
     scrollToLeadForm,
-  } = usePriceCalculator({ locale, config });
+  } = usePriceCalculator({ locale, config, initialSelections });
 
   return (
     <section className="price-calculator-shell site-section py-16 sm:py-24">

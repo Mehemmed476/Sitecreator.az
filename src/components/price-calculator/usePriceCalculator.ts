@@ -30,9 +30,11 @@ export type PriceCalculatorLeadForm = {
 export function usePriceCalculator({
   locale,
   config,
+  initialSelections,
 }: {
   locale: LocaleKey;
   config: PriceCalculatorConfig;
+  initialSelections?: PriceCalculatorSelections;
 }) {
   const safeConfig = useMemo(() => buildSafeCalculatorConfig(config), [config]);
   const copy = safeConfig.copy;
@@ -42,7 +44,7 @@ export function usePriceCalculator({
     safeConfig.addOnGroups.find((group) => group.id === "seo") ??
     safeConfig.addOnGroups[Math.min(1, safeConfig.addOnGroups.length - 1)];
 
-  const [selections, setSelections] = useState<PriceCalculatorSelections>({
+  const defaultSelections = useMemo<PriceCalculatorSelections>(() => ({
     serviceId: safeConfig.services[0].id,
     unitCount: safeConfig.services[0].defaultUnits,
     designId: safeConfig.designOptions[Math.min(1, safeConfig.designOptions.length - 1)].id,
@@ -51,6 +53,11 @@ export function usePriceCalculator({
     supportId: safeConfig.supportOptions[Math.min(1, safeConfig.supportOptions.length - 1)].id,
     selectedBuild: buildGroup.items.slice(0, Math.min(4, buildGroup.items.length)).map((item) => item.id),
     selectedSeo: seoGroup.items.slice(0, Math.min(3, seoGroup.items.length)).map((item) => item.id),
+  }), [buildGroup.items, safeConfig.designOptions, safeConfig.logoOptions, safeConfig.services, safeConfig.supportOptions, safeConfig.timelineOptions, seoGroup.items]);
+
+  const [selections, setSelections] = useState<PriceCalculatorSelections>({
+    ...defaultSelections,
+    ...initialSelections,
   });
   const [form, setForm] = useState<PriceCalculatorLeadForm>({
     name: "",

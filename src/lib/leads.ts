@@ -1,4 +1,4 @@
-export const leadSources = ["contact", "calculator"] as const;
+export const leadSources = ["contact", "calculator", "package"] as const;
 export type LeadSource = (typeof leadSources)[number];
 
 export const leadStatuses = [
@@ -71,6 +71,10 @@ export const leadSourceMeta: Record<
   calculator: {
     label: "Kalkulyator",
     className: "border-primary/20 bg-primary/10 text-primary",
+  },
+  package: {
+    label: "Paket",
+    className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
   },
 };
 

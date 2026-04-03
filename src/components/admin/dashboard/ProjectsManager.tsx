@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FolderOpen, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import {
+  AdminConfirmDialog,
+  AdminEmptyState,
+} from "@/components/admin/dashboard/shared";
 import { formatMoneyValue } from "@/lib/price-calculator-estimate";
 import type { AdminProjectRecord } from "@/components/admin/dashboard/types";
 
@@ -43,6 +48,7 @@ export function ProjectsManager({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [draft, setDraft] = useState<AdminProjectRecord | null>(summary.projects[0] ?? null);
+  const [confirmDeleteProjectOpen, setConfirmDeleteProjectOpen] = useState(false);
 
   const selectedProject =
     projects.find((project) => project._id === selectedId) ?? projects[0] ?? null;
@@ -136,6 +142,38 @@ export function ProjectsManager({
     }
   }
 
+  async function handleDeleteProject() {
+    if (!draft) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccess(null);
+
+      const response = await fetch(`/api/projects/${draft._id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Layihə silinmədi.");
+      }
+
+      setProjects((current) => {
+        const next = current.filter((project) => project._id !== draft._id);
+        setSelectedId(next[0]?._id ?? null);
+        return next;
+      });
+      setSuccess("Layihə, ona bağlı təklif və chat tarixçəsi silindi.");
+      setConfirmDeleteProjectOpen(false);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Layihə silinmədi.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-3">
@@ -149,27 +187,35 @@ export function ProjectsManager({
 
       <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,_1fr)]">
         <div className="space-y-3">
-          {projects.map((project) => (
-            <button
-              key={project._id}
-              onClick={() => setSelectedId(project._id)}
-              className={`admin-panel w-full rounded-[22px] p-4 text-left ${
-                selectedId === project._id ? "border-primary/30 bg-primary/10" : ""
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
-                  {project.proposal.proposalNumber}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-muted">
-                  {projectStatusLabels[project.status]}
-                </span>
-              </div>
-              <p className="mt-3 text-base font-semibold">{project.title}</p>
-              <p className="mt-1 text-sm text-muted">{project.client.name} • {project.client.email}</p>
-              <p className="mt-3 text-sm text-muted">₼ {formatMoneyValue(locale, project.total)}</p>
-            </button>
-          ))}
+          {projects.length ? (
+            projects.map((project) => (
+              <button
+                key={project._id}
+                onClick={() => setSelectedId(project._id)}
+                className={`admin-panel w-full rounded-[22px] p-4 text-left ${
+                  selectedId === project._id ? "border-primary/30 bg-primary/10" : ""
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
+                    {project.proposal.proposalNumber}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-muted">
+                    {projectStatusLabels[project.status]}
+                  </span>
+                </div>
+                <p className="mt-3 text-base font-semibold">{project.title}</p>
+                <p className="mt-1 text-sm text-muted">{project.client.name} • {project.client.email}</p>
+                <p className="mt-3 text-sm text-muted">₼ {formatMoneyValue(locale, project.total)}</p>
+              </button>
+            ))
+          ) : (
+            <AdminEmptyState
+              icon={FolderOpen}
+              title="Hələ heç layihə yoxdur."
+              description="Lead-dən proposal və layihə yaradanda bu siyahıda görünəcək."
+            />
+          )}
         </div>
 
         {draft ? (
@@ -182,7 +228,15 @@ export function ProjectsManager({
                     Qiymətləri, mərhələləri və portalda görünən məlumatları buradan yenilə.
                   </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteProjectOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/15"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Layihəni sil
+                  </button>
                   <Link href={`/portal/projects/${draft._id}`} locale={locale} className="btn-secondary text-sm">
                     Portal layihə görünüşü
                   </Link>
@@ -363,9 +417,23 @@ export function ProjectsManager({
             </section>
           </div>
         ) : (
-          <div className="admin-panel rounded-[24px] p-8 text-sm text-muted">Layihə seçin.</div>
+          <div className="admin-panel rounded-[24px] p-8 text-sm text-muted">
+            {projects.length ? "Layihə seçin." : "Hazırda göstərəcək layihə yoxdur."}
+          </div>
         )}
       </div>
+
+      <AdminConfirmDialog
+        open={confirmDeleteProjectOpen}
+        title="Layihə silinsin?"
+        description="Bu əməliyyat layihəni, ona bağlı təklifi və bu layihənin chat tarixçəsini siləcək."
+        confirmText="Bəli, sil"
+        cancelText="Ləğv et"
+        confirmTone="danger"
+        loading={saving}
+        onConfirm={() => void handleDeleteProject()}
+        onClose={() => setConfirmDeleteProjectOpen(false)}
+      />
     </div>
   );
 }

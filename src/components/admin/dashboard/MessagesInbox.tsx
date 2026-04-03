@@ -129,6 +129,9 @@ export function MessagesInbox() {
         lead.message,
         lead.phone,
         lead.calculator?.serviceName,
+        lead.packageRequest?.title,
+        lead.packageRequest?.category,
+        lead.packageRequest?.slug,
         lead.notes,
         lead.outcomeReason,
       ]
@@ -655,6 +658,26 @@ export function MessagesInbox() {
                     </div>
                   ) : null}
                 </div>
+
+                {selectedLead.source === "package" ? (
+                  <div className="admin-panel rounded-[24px] p-6">
+                    <h4 className="text-lg font-semibold">Paket sorğusu</h4>
+                    <div className="mt-4 space-y-4 text-sm text-muted">
+                      <div className="space-y-2">
+                        <p>Paket: {selectedLead.packageRequest?.title || "-"}</p>
+                        <p>Kateqoriya: {selectedLead.packageRequest?.category || "-"}</p>
+                        <p>Dil: {selectedLead.packageRequest?.locale || "-"}</p>
+                        <p>Slug: {selectedLead.packageRequest?.slug || "-"}</p>
+                        <p>
+                          Start qiymət:{" "}
+                          {typeof selectedLead.packageRequest?.startingPrice === "number"
+                            ? `₼ ${formatWholeNumber(selectedLead.packageRequest.startingPrice)}`
+                            : "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
                 {selectedLead.source === "calculator" ? (
                   <div className="admin-panel rounded-[24px] p-6">

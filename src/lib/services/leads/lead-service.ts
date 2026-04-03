@@ -26,13 +26,23 @@ function parseFollowUpDate(value: string | null | undefined) {
 }
 
 function buildCreatedActivity(input: CreateLeadInput) {
+  const packageTitle = input.packageRequest?.title?.trim();
+  const calculatorTotal = typeof input.calculator?.total === "number" ? input.calculator.total : null;
+
   return {
     type: "created" as const,
-    title: input.source === "calculator" ? "Kalkulyator lead-i yaradildi" : "Elaqe lead-i yaradildi",
+    title:
+      input.source === "calculator"
+        ? "Kalkulyator lead-i yaradildi"
+        : input.source === "package"
+          ? "Paket lead-i yaradildi"
+          : "Elaqe lead-i yaradildi",
     detail:
-      input.source === "calculator" && typeof input.calculator?.total === "number"
-        ? `Ilkin hesab: ${input.calculator.total}`
-        : "Public saytdan yeni muraciet daxil oldu.",
+      input.source === "calculator" && calculatorTotal !== null
+        ? `Ilkin hesab: ${calculatorTotal}`
+        : input.source === "package" && packageTitle
+          ? `Secilen paket: ${packageTitle}`
+          : "Public saytdan yeni muraciet daxil oldu.",
     createdAt: new Date(),
   };
 }
@@ -57,6 +67,7 @@ export async function createLeadEntry(payload: unknown) {
     notes: input.notes,
     outcomeReason: input.outcomeReason,
     calculator: input.source === "calculator" ? input.calculator : undefined,
+    packageRequest: input.source === "package" ? input.packageRequest : undefined,
     activities: [buildCreatedActivity(input)],
   });
 }

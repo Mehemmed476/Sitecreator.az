@@ -1,25 +1,71 @@
 import Image from "next/image";
-import { ArrowRight, CheckCircle2, CircleDashed, Sparkles } from "lucide-react";
-import { Link } from "@/i18n/navigation";
+import { CheckCircle2, Sparkles } from "lucide-react";
+import { PackageLeadModalTrigger } from "@/components/packages/PackageLeadModalTrigger";
 import { MANAT, formatMoneyValue } from "@/lib/price-calculator-estimate";
+import type { PackagePresetSummary } from "@/lib/package-calculator-preset";
 import {
   getLocalizedPackageContent,
   type PackageLocale,
   type PackageSolutionRecord,
 } from "@/lib/package-solutions";
 
-const sectionCopy: Record<PackageLocale, { price: string; faq: string; highlights: string }> = {
-  az: { price: "Start qiymət", faq: "FAQ", highlights: "Nə daxildir?" },
-  en: { price: "Starting price", faq: "FAQ", highlights: "What is included?" },
-  ru: { price: "Стартовая цена", faq: "FAQ", highlights: "Что входит?" },
+const sectionCopy: Record<
+  PackageLocale,
+  {
+    price: string;
+    included: string;
+    overview: string;
+    service: string;
+    design: string;
+    logo: string;
+    support: string;
+    duration: string;
+    nextStep: string;
+  }
+> = {
+  az: {
+    price: "Start qiymət",
+    included: "Nə daxildir?",
+    overview: "Paket xülasəsi",
+    service: "Xidmət",
+    design: "Dizayn",
+    logo: "Logo",
+    support: "Dəstək",
+    duration: "Müddət",
+    nextStep: "Növbəti addım",
+  },
+  en: {
+    price: "Starting price",
+    included: "What is included?",
+    overview: "Package overview",
+    service: "Service",
+    design: "Design",
+    logo: "Logo",
+    support: "Support",
+    duration: "Timeline",
+    nextStep: "Next step",
+  },
+  ru: {
+    price: "Стартовая цена",
+    included: "Что входит?",
+    overview: "Обзор пакета",
+    service: "Услуга",
+    design: "Дизайн",
+    logo: "Логотип",
+    support: "Поддержка",
+    duration: "Срок",
+    nextStep: "Следующий шаг",
+  },
 };
 
 export function PackageSolutionDetailPageContent({
   locale,
   pkg,
+  presetSummary,
 }: {
   locale: PackageLocale;
   pkg: PackageSolutionRecord;
+  presetSummary: PackagePresetSummary;
 }) {
   const content = getLocalizedPackageContent(pkg, locale);
   const labels = sectionCopy[locale];
@@ -46,14 +92,14 @@ export function PackageSolutionDetailPageContent({
                 {content.heroDescription}
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link href="/contact" className="btn-primary text-base">
-                  {content.primaryCta}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link href="/price-calculator" className="btn-secondary text-base">
-                  {content.secondaryCta}
-                </Link>
+              <div className="mt-8">
+                <PackageLeadModalTrigger
+                  locale={locale}
+                  pkg={pkg}
+                  title={content.cardTitle}
+                  primaryCta={content.primaryCta}
+                  secondaryCta={content.secondaryCta}
+                />
               </div>
             </div>
 
@@ -83,38 +129,22 @@ export function PackageSolutionDetailPageContent({
                 </div>
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                    {content.audienceTitle}
+                    {labels.overview}
                   </p>
                 </div>
               </div>
-              <p className="mt-5 text-base leading-7 text-muted">{content.audienceDescription}</p>
-              <ul className="mt-6 space-y-3">
-                {content.perfectFor.map((item, index) => (
-                  <li key={`${item}-${index}`} className="site-card-soft flex gap-3 rounded-2xl p-4 text-sm leading-6 text-muted">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="site-card rounded-[1.75rem] p-7">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <CircleDashed className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                    {labels.highlights}
-                  </p>
-                  <h2 className="mt-1 text-2xl font-bold">{content.highlightsTitle}</h2>
-                </div>
-              </div>
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {content.highlights.map((item, index) => (
-                  <div key={`${item.title}-${index}`} className="site-card-soft rounded-2xl p-5">
-                    <h3 className="text-lg font-semibold">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
+              <p className="mt-5 text-base leading-7 text-muted">{content.cardDescription}</p>
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {[
+                  { label: labels.service, value: `${presetSummary.serviceName} · ${presetSummary.unitCount} ${presetSummary.unitLabel.toLowerCase()}` },
+                  { label: labels.design, value: presetSummary.designLabel },
+                  { label: labels.logo, value: presetSummary.logoLabel },
+                  { label: labels.support, value: presetSummary.supportLabel },
+                  { label: labels.duration, value: presetSummary.timelineLabel },
+                ].map((item) => (
+                  <div key={item.label} className="site-card-soft rounded-2xl p-5">
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{item.label}</div>
+                    <div className="mt-2 text-base font-semibold text-foreground">{item.value}</div>
                   </div>
                 ))}
               </div>
@@ -127,12 +157,12 @@ export function PackageSolutionDetailPageContent({
               <div className="mt-2 text-4xl font-bold tracking-tight">
                 {MANAT} {formatMoneyValue(locale, pkg.startingPrice)}
               </div>
-              <p className="mt-3 text-sm leading-6 text-muted">{content.timelineLabel}</p>
+              <p className="mt-3 text-sm leading-6 text-muted">{presetSummary.timelineLabel}</p>
 
               <div className="mt-6 border-t border-border/80 pt-6">
-                <h2 className="text-xl font-bold">{content.includedTitle}</h2>
+                <h2 className="text-xl font-bold">{labels.included}</h2>
                 <ul className="mt-4 space-y-3">
-                  {content.includedModules.map((item, index) => (
+                  {presetSummary.includedModules.map((item, index) => (
                     <li key={`${item}-${index}`} className="site-card-soft flex gap-3 rounded-2xl p-4 text-sm leading-6 text-muted">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                       <span>{item}</span>
@@ -143,16 +173,17 @@ export function PackageSolutionDetailPageContent({
             </article>
 
             <article className="site-card rounded-[1.75rem] p-7">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{labels.faq}</p>
-              <h2 className="mt-1 text-2xl font-bold">{content.faqTitle}</h2>
-              <p className="mt-3 text-sm leading-6 text-muted">{content.faqDescription}</p>
-              <div className="mt-6 space-y-4">
-                {content.faqItems.map((item, index) => (
-                  <div key={`${item.question}-${index}`} className="site-card-soft rounded-2xl p-5">
-                    <h3 className="text-base font-semibold">{item.question}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted">{item.answer}</p>
-                  </div>
-                ))}
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{labels.nextStep}</p>
+              <h2 className="mt-1 text-2xl font-bold">{content.primaryCta}</h2>
+              <p className="mt-3 text-sm leading-6 text-muted">{content.heroDescription}</p>
+              <div className="mt-6 rounded-2xl border border-border/70 bg-surface/40 p-5">
+                <PackageLeadModalTrigger
+                  locale={locale}
+                  pkg={pkg}
+                  title={content.cardTitle}
+                  primaryCta={content.primaryCta}
+                  secondaryCta={content.secondaryCta}
+                />
               </div>
             </article>
           </div>

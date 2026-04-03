@@ -1,6 +1,10 @@
 import { connectDB } from "@/lib/db";
 import { AppError } from "@/lib/errors/app-error";
-import { findProjectById } from "@/lib/repositories/project-repository";
+import { Contact } from "@/lib/models/Contact";
+import { deleteProjectChatAttachments } from "@/lib/project-chat-attachments";
+import { listProjectMessages, deleteProjectMessages } from "@/lib/repositories/project-chat-repository";
+import { deleteProjectById, findProjectById } from "@/lib/repositories/project-repository";
+import { deleteProposalById } from "@/lib/repositories/proposal-repository";
 import { updateProjectInputSchema } from "@/lib/validators/project-validator";
 
 export async function updateProjectEntry(id: string, payload: unknown) {
@@ -42,4 +46,49 @@ export async function updateProjectEntry(id: string, payload: unknown) {
 
   await project.save();
   return project.toObject();
+}
+
+export async function clearProjectChatHistory(id: string) {
+  await connectDB();
+  const project = await findProjectById(id);
+
+  if (!project) {
+    throw new AppError("Project not found", 404);
+  }
+
+  const messages = await listProjectMessages(project._id);
+  const attachments = messages.flatMap((message) => message.attachments ?? []);
+
+  await deleteProjectChatAttachments(attachments);
+  await deleteProjectMessages(project._id);
+
+  return { ok: true };
+}
+
+export async function deleteProjectEntry(id: string) {
+  await connectDB();
+  const project = await findProjectById(id);
+
+  if (!project) {
+    throw new AppError("Project not found", 404);
+  }
+
+  const messages = await listProjectMessages(project._id);
+  const attachments = messages.flatMap((message) => message.attachments ?? []);
+
+  await deleteProjectChatAttachments(attachments);
+  await deleteProjectMessages(project._id);
+
+  if (project.proposalId) {
+    await deleteProposalById(project.proposalId);
+  }
+
+  await Contact.updateMany(
+    { projectId: project._id },
+    { $set: { projectId: null, proposalId: null, convertedAt: null } }
+  );
+
+  await deleteProjectById(project._id);
+
+  return { ok: true };
 }

@@ -42,17 +42,40 @@ function buildLineItems(lead: IContact | null) {
     ];
   }
 
+  if (lead.packageRequest?.title?.trim() && typeof lead.packageRequest.startingPrice === "number") {
+    return [
+      {
+        label: lead.packageRequest.title.trim(),
+        amount: Math.round(lead.packageRequest.startingPrice),
+      },
+    ];
+  }
+
   return [{ label: "Ferdi layihe teklifi", amount: 0 }];
 }
 
 function buildProjectTitle(lead: IContact | null) {
   if (!lead) return "Yeni layihe";
+  if (lead.packageRequest?.title?.trim()) return `${lead.packageRequest.title.trim()} layihesi`;
   if (lead.calculator?.serviceName?.trim()) return `${lead.calculator.serviceName.trim()} layihesi`;
   if (lead.company?.trim()) return `${lead.company.trim()} ucun layihe`;
   return `${lead.name.trim()} layihesi`;
 }
 
 function buildProjectSummary(lead: IContact | null) {
+  if (lead?.source === "package" && lead.packageRequest) {
+    const title = lead.packageRequest.title?.trim() || "Secilen paket";
+    const price =
+      typeof lead.packageRequest.startingPrice === "number"
+        ? Math.round(lead.packageRequest.startingPrice)
+        : null;
+    const customNote = lead.message?.trim();
+
+    return price
+      ? `${title} ucun ilkin paket sorgusu daxil olub. Start qiymet ${price} AZN olaraq qeyd olunub.${customNote ? ` Musteri qeydi: ${customNote}` : ""}`
+      : `${title} ucun ilkin paket sorgusu daxil olub.${customNote ? ` Musteri qeydi: ${customNote}` : ""}`;
+  }
+
   if (lead?.source === "calculator" && lead.calculator) {
     const serviceName = lead.calculator.serviceName?.trim() || "secilen xidmet";
     const timeline = lead.calculator.timelineLabel?.trim() || "standart timeline";
@@ -69,6 +92,14 @@ function buildProjectSummary(lead: IContact | null) {
 
 function buildProposalNote(lead: IContact | null) {
   if (!lead) return "Lead esasinda avtomatik hazirlanmis ilkin teklif.";
+
+  if (lead.source === "package") {
+    const packageTitle = lead.packageRequest?.title?.trim() || "Secilen paket";
+    const message = lead.message?.trim();
+    return message
+      ? `${packageTitle} ucun paket sorgusu. Musteri qeydi: ${message}`
+      : `${packageTitle} ucun avtomatik hazirlanmis ilkin paket teklifi.`;
+  }
 
   if (lead.source === "calculator") {
     const lines = (lead.message || "")
@@ -161,14 +192,15 @@ export async function convertLeadToProject(leadId: string) {
       ? Math.round(lead.calculator.monthlySupport)
       : 0;
   const projectTitle = buildProjectTitle(lead);
-  const serviceName = lead.calculator?.serviceName?.trim() || "Ferdi hell";
+  const serviceName =
+    lead.packageRequest?.title?.trim() || lead.calculator?.serviceName?.trim() || "Ferdi hell";
   const summary = buildProjectSummary(lead);
 
   const proposal = await createProposal({
     proposalNumber: buildProposalNumber(),
     clientId: client._id,
     leadId: lead._id,
-    locale: lead.calculator?.locale?.trim() || "az",
+    locale: lead.packageRequest?.locale?.trim() || lead.calculator?.locale?.trim() || "az",
     status: "draft",
     title: `${projectTitle} ucun teklif`,
     serviceName,

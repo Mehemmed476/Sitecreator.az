@@ -4,6 +4,7 @@ import type {
   PackageFaqItem,
   PackageInfoItem,
   PackageInstagramDraft,
+  PackageCalculatorPreset,
   PackageLocale,
   PackageLocaleContent,
   PackageSolutionsConfig,
@@ -91,6 +92,20 @@ const PackageDirectoryLocaleContentSchema = new Schema<PackageDirectoryLocaleCon
   { _id: false }
 );
 
+const PackageCalculatorPresetSchema = new Schema<PackageCalculatorPreset>(
+  {
+    serviceId: { type: String, trim: true, default: "website" },
+    unitCount: { type: Number, default: 5 },
+    designId: { type: String, trim: true, default: "professional" },
+    logoId: { type: String, trim: true, default: "none" },
+    timelineId: { type: String, trim: true, default: "standard" },
+    supportId: { type: String, trim: true, default: "support-none" },
+    selectedBuild: { type: [String], default: [] },
+    selectedSeo: { type: [String], default: [] },
+  },
+  { _id: false }
+);
+
 const PackageRecordSchema = new Schema(
   {
     id: { type: String, trim: true, required: true },
@@ -98,6 +113,7 @@ const PackageRecordSchema = new Schema(
     category: { type: String, trim: true, default: "business" },
     coverImageUrl: { type: String, trim: true, default: "" },
     startingPrice: { type: Number, default: 0 },
+    calculatorPreset: { type: PackageCalculatorPresetSchema, default: () => ({}) },
     slugs: {
       az: { type: String, trim: true, default: "" },
       en: { type: String, trim: true, default: "" },

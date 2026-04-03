@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PriceCalculatorClient } from "@/components/price-calculator/PriceCalculatorClient";
+import { resolvePriceCalculatorSelectionsFromSearchParams } from "@/lib/package-calculator-preset";
 import {
   defaultPriceCalculatorConfig,
   type LocaleKey,
@@ -21,10 +22,13 @@ export const dynamic = "force-dynamic";
 
 export default async function PriceCalculatorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale } = await params;
+  const resolvedSearchParams = await searchParams;
   setRequestLocale(locale);
   await getTranslations();
 
@@ -36,5 +40,10 @@ export default async function PriceCalculatorPage({
     // Fallback to seed config when DB is temporarily unavailable.
   }
 
-  return <PriceCalculatorClient locale={locale as LocaleKey} config={config} />;
+  const initialSelections = resolvePriceCalculatorSelectionsFromSearchParams(
+    resolvedSearchParams,
+    config
+  );
+
+  return <PriceCalculatorClient locale={locale as LocaleKey} config={config} initialSelections={initialSelections} />;
 }

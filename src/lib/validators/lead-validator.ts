@@ -26,6 +26,17 @@ const calculatorSnapshotSchema = z
   })
   .strict();
 
+const packageRequestSnapshotSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    title: z.string().trim().min(1),
+    slug: z.string().trim().min(1),
+    category: z.string().trim().optional(),
+    locale: z.string().trim().optional(),
+    startingPrice: z.number().finite().optional(),
+  })
+  .strict();
+
 export const createLeadInputSchema = z.object({
   name: z.string().trim().min(1),
   email: z.string().trim().email(),
@@ -37,6 +48,7 @@ export const createLeadInputSchema = z.object({
   notes: z.string().trim().optional().default(""),
   outcomeReason: z.string().trim().optional().default(""),
   calculator: calculatorSnapshotSchema.optional(),
+  packageRequest: packageRequestSnapshotSchema.optional(),
 });
 
 export const updateLeadInputSchema = z

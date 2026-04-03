@@ -1,4 +1,10 @@
 import { slugifyInsight } from "@/lib/insight-utils";
+export type { PackageCalculatorPreset } from "@/lib/package-calculator-preset";
+import {
+  createDefaultPackageCalculatorPreset,
+  sanitizePackageCalculatorPreset,
+  type PackageCalculatorPreset,
+} from "@/lib/package-calculator-preset";
 
 export const packageLocales = ["az", "en", "ru"] as const;
 export type PackageLocale = (typeof packageLocales)[number];
@@ -45,6 +51,7 @@ export type PackageSolutionRecord = {
   category: string;
   coverImageUrl: string;
   startingPrice: number;
+  calculatorPreset: PackageCalculatorPreset;
   slugs: Record<PackageLocale, string>;
   content: Record<PackageLocale, PackageLocaleContent>;
 };
@@ -130,7 +137,8 @@ function createPackageRecord(
   coverImageUrl: string,
   startingPrice: number,
   slugs: Record<PackageLocale, string>,
-  content: Record<PackageLocale, PackageLocaleContent>
+  content: Record<PackageLocale, PackageLocaleContent>,
+  calculatorPreset = getPresetFallbackById(id)
 ): PackageSolutionRecord {
   return {
     id,
@@ -138,6 +146,7 @@ function createPackageRecord(
     category,
     coverImageUrl,
     startingPrice,
+    calculatorPreset: sanitizePackageCalculatorPreset(calculatorPreset),
     slugs: { ...slugs },
     content: {
       az: cloneLocaleContent(content.az),
@@ -159,8 +168,79 @@ export function createEmptyPackageRecord(id = "new-package", order = 1): Package
       az: createEmptyPackageLocaleContent(),
       en: createEmptyPackageLocaleContent(),
       ru: createEmptyPackageLocaleContent(),
-    }
+    },
+    createDefaultPackageCalculatorPreset()
   );
+}
+
+function getPresetFallbackById(id: string): PackageCalculatorPreset {
+  switch (id) {
+    case "landing-page-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 3,
+        selectedBuild: ["contact-form", "reviews", "analytics"],
+        selectedSeo: ["seo-meta", "seo-sitemap"],
+      };
+    case "corporate-website-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 8,
+        selectedBuild: ["contact-form", "faq", "multilingual", "analytics"],
+        selectedSeo: ["seo-on-page", "seo-meta", "seo-sitemap"],
+      };
+    case "service-business-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 6,
+        selectedBuild: ["contact-form", "advanced-forms", "reviews", "whatsapp"],
+        selectedSeo: ["seo-on-page", "seo-meta"],
+      };
+    case "restaurant-web-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 7,
+        selectedBuild: ["booking", "portfolio-gallery", "whatsapp", "faq"],
+        selectedSeo: ["seo-on-page", "seo-meta", "seo-local"],
+      };
+    case "clinic-web-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 8,
+        selectedBuild: ["booking", "advanced-forms", "reviews", "whatsapp"],
+        selectedSeo: ["seo-on-page", "seo-meta", "seo-local"],
+      };
+    case "ecommerce-starter-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("ecommerce"),
+        unitCount: 12,
+        selectedBuild: ["catalog", "whatsapp", "analytics"],
+        selectedSeo: ["seo-on-page", "seo-meta", "seo-sitemap", "seo-schema"],
+      };
+    case "education-course-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 9,
+        selectedBuild: ["advanced-forms", "blog", "faq", "analytics"],
+        selectedSeo: ["seo-on-page", "seo-meta", "seo-sitemap"],
+      };
+    case "tourism-agency-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 8,
+        selectedBuild: ["advanced-forms", "gallery", "whatsapp", "faq"],
+        selectedSeo: ["seo-on-page", "seo-meta", "seo-local"],
+      };
+    case "personal-brand-portfolio-kit":
+      return {
+        ...createDefaultPackageCalculatorPreset("website"),
+        unitCount: 5,
+        selectedBuild: ["portfolio-gallery", "reviews", "blog"],
+        selectedSeo: ["seo-on-page", "seo-meta"],
+      };
+    default:
+      return createDefaultPackageCalculatorPreset();
+  }
 }
 
 function buildInstagramDraft(
@@ -1136,7 +1216,8 @@ function sanitizePackageRecord(input: unknown, fallback: PackageSolutionRecord, 
       az: sanitizeLocaleContent(contentSource.az, fallback.content.az),
       en: sanitizeLocaleContent(contentSource.en, fallback.content.en),
       ru: sanitizeLocaleContent(contentSource.ru, fallback.content.ru),
-    }
+    },
+    sanitizePackageCalculatorPreset(source.calculatorPreset, fallback.calculatorPreset)
   );
 }
 

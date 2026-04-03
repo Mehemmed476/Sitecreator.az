@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { PackageSolutionDetailPageContent } from "@/components/packages/PackageSolutionDetailPageContent";
+import { buildPackagePresetSummary } from "@/lib/package-calculator-preset";
+import { defaultPriceCalculatorConfig } from "@/lib/price-calculator";
+import { loadPriceCalculatorConfig } from "@/lib/price-calculator-store";
 import {
   getLocalizedPackageContent,
   getPackageAlternates,
@@ -90,6 +93,12 @@ export default async function PackageDetailPage({
   }
 
   const content = getLocalizedPackageContent(pkg, locale);
+  const calculatorConfig = await loadPriceCalculatorConfig().catch(() => null);
+  const presetSummary = buildPackagePresetSummary(
+    locale,
+    calculatorConfig ?? defaultPriceCalculatorConfig,
+    pkg.calculatorPreset
+  );
   const schema = {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -117,7 +126,7 @@ export default async function PackageDetailPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <PackageSolutionDetailPageContent locale={locale} pkg={pkg} />
+      <PackageSolutionDetailPageContent locale={locale} pkg={pkg} presetSummary={presetSummary} />
     </>
   );
 }

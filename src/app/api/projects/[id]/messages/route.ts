@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createRouteErrorResponse } from "@/lib/http/route-handlers";
-import { ensurePortalApiSession } from "@/lib/permissions/session-permissions";
+import {
+  ensureAdminApiSession,
+  ensurePortalApiSession,
+} from "@/lib/permissions/session-permissions";
 import {
   createProjectMessageForSession,
   listProjectMessagesForSession,
 } from "@/lib/services/chat/project-chat-service";
+import { clearProjectChatHistory } from "@/lib/services/projects/project-service";
 
 export async function GET(
   _request: NextRequest,
@@ -45,5 +49,19 @@ export async function POST(
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
     return createRouteErrorResponse("api/projects/[id]/messages.POST", error);
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    ensureAdminApiSession(await auth());
+    const { id } = await params;
+    const result = await clearProjectChatHistory(id);
+    return NextResponse.json(result);
+  } catch (error) {
+    return createRouteErrorResponse("api/projects/[id]/messages.DELETE", error);
   }
 }
