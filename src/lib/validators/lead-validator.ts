@@ -38,15 +38,15 @@ const packageRequestSnapshotSchema = z
   .strict();
 
 export const createLeadInputSchema = z.object({
-  name: z.string().trim().min(1),
+  name: z.string().trim().min(1).max(120),
   email: z.string().trim().email(),
-  message: z.string().trim().min(1),
-  phone: z.string().trim().optional().default(""),
-  company: z.string().trim().optional().default(""),
+  message: z.string().trim().min(1).max(4000),
+  phone: z.string().trim().max(40).optional().default(""),
+  company: z.string().trim().max(120).optional().default(""),
   source: z.enum(leadSources).optional().default("contact"),
   status: z.enum(leadStatuses).optional().default("new"),
-  notes: z.string().trim().optional().default(""),
-  outcomeReason: z.string().trim().optional().default(""),
+  notes: z.string().trim().max(2000).optional().default(""),
+  outcomeReason: z.string().trim().max(500).optional().default(""),
   calculator: calculatorSnapshotSchema.optional(),
   packageRequest: packageRequestSnapshotSchema.optional(),
 });
@@ -54,8 +54,8 @@ export const createLeadInputSchema = z.object({
 export const updateLeadInputSchema = z
   .object({
     status: z.enum(leadStatuses).optional(),
-    notes: z.string().optional(),
-    outcomeReason: z.string().optional(),
+    notes: z.string().max(2000).optional(),
+    outcomeReason: z.string().max(500).optional(),
     nextFollowUpAt: z.union([z.string(), z.null()]).optional(),
     isRead: z.boolean().optional(),
   })

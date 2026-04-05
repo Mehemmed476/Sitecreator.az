@@ -63,11 +63,13 @@ export async function getPackageSolutionById(id: string) {
 
 export async function getAllPackageSlugs() {
   const packages = await getAllPackageSolutions();
-  return packages.map((item) => ({
-    id: item.id,
-    slugs: item.slugs,
-    updatedAt: new Date(),
-  }));
+  return packages
+    .filter((item) => packageHasAnySlug(item))
+    .map((item) => ({
+      id: item.id,
+      slugs: item.slugs,
+      updatedAt: new Date(),
+    }));
 }
 
 export type PackageListItem = {
@@ -81,12 +83,23 @@ export type PackageListItem = {
 
 export function mapPackageListItem(item: PackageSolutionRecord, locale: PackageLocale): PackageListItem {
   const content = getLocalizedPackageContent(item, locale);
+  const resolvedSlug =
+    item.slugs[locale] ||
+    item.slugs.az ||
+    item.slugs.en ||
+    item.slugs.ru ||
+    item.id;
+
   return {
     id: item.id,
-    slug: item.slugs[locale],
+    slug: resolvedSlug,
     title: content.cardTitle,
     description: content.cardDescription,
     coverImageUrl: item.coverImageUrl,
     startingPrice: item.startingPrice,
   };
+}
+
+function packageHasAnySlug(item: PackageSolutionRecord) {
+  return Boolean(item.slugs.az || item.slugs.en || item.slugs.ru);
 }

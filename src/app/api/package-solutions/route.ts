@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdminSession } from "@/lib/auth-guards";
 import {
-  getPackageSolutionsConfig,
-  savePackageSolutionsConfig,
-} from "@/lib/package-solutions-store";
+  getSyncedPackageSolutionsConfig,
+  saveSyncedPackageSolutionsConfig,
+} from "@/lib/services/package-solutions/package-solutions-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const config = await getPackageSolutionsConfig();
+    const config = await getSyncedPackageSolutionsConfig();
     return NextResponse.json(config, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -31,7 +31,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const config = await savePackageSolutionsConfig(body);
+    const config = await saveSyncedPackageSolutionsConfig(body);
 
     return NextResponse.json(config);
   } catch (error) {

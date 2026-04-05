@@ -5,6 +5,8 @@ import {
   ensureAdminApiSession,
   ensurePortalApiSession,
 } from "@/lib/permissions/session-permissions";
+import { assertRequestBodySize, assertTrustedRequestOrigin, getClientIp } from "@/lib/security/request";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 import {
   createProjectMessageForSession,
   listProjectMessagesForSession,
@@ -30,7 +32,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    assertTrustedRequestOrigin(request);
+    assertRequestBodySize(request, 20 * 1024 * 1024);
     const session = ensurePortalApiSession(await auth());
+    enforceRateLimit({
+      key: `project-message:${getClientIp(request)}:${session.user.id ?? session.user.role}`,
+      limit: 30,
+      windowMs: 60 * 1000,
+    });
     const { id } = await params;
     const contentType = request.headers.get("content-type") || "";
     let body = "";

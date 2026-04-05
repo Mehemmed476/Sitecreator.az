@@ -4,9 +4,18 @@ import { connectDB } from "@/lib/db";
 import { Project } from "@/lib/models/Project";
 import { getProjectChatChannel, normalizeObjectId } from "@/lib/project-chat";
 import { getPusherServer } from "@/lib/pusher-server";
+import { assertRequestBodySize, assertTrustedRequestOrigin, getClientIp } from "@/lib/security/request";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    assertTrustedRequestOrigin(request);
+    assertRequestBodySize(request, 8 * 1024);
+    enforceRateLimit({
+      key: `pusher-auth:${getClientIp(request)}`,
+      limit: 60,
+      windowMs: 60 * 1000,
+    });
     const session = await auth();
     if (!session?.user?.role) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

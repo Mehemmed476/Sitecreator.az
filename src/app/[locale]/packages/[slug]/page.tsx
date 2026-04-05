@@ -19,11 +19,13 @@ import { getCanonicalPath, getSiteUrl } from "@/lib/seo";
 export async function generateStaticParams() {
   const packages = await getAllPackageSlugs().catch(() => []);
 
-  return packages.flatMap((pkg) => [
-    { locale: "az", slug: pkg.slugs.az },
-    { locale: "en", slug: pkg.slugs.en },
-    { locale: "ru", slug: pkg.slugs.ru },
-  ]);
+  return packages.flatMap((pkg) =>
+    ([
+      { locale: "az", slug: pkg.slugs.az },
+      { locale: "en", slug: pkg.slugs.en },
+      { locale: "ru", slug: pkg.slugs.ru },
+    ] as const).filter((entry) => entry.slug)
+  );
 }
 
 export async function generateMetadata({

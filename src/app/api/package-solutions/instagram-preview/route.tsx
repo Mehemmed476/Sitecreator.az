@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { auth } from "@/lib/auth";
+import { isAdminSession } from "@/lib/auth-guards";
 import { MANAT, formatMoneyValue } from "@/lib/price-calculator-estimate";
 import {
   createInstagramDraftForPackage,
@@ -59,6 +61,11 @@ function cleanLines(values: string[]) {
 
 export async function GET(request: Request) {
   try {
+    const session = await auth();
+    if (!isAdminSession(session)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const packageId = searchParams.get("packageId");
     const locale = normalizeLocale(searchParams.get("locale"));

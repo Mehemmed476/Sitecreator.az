@@ -12,6 +12,9 @@ import {
 import { uploadProjectChatAttachments } from "@/lib/project-chat-attachments";
 import { getPusherServer } from "@/lib/pusher-server";
 
+const MAX_MESSAGE_LENGTH = 4000;
+const MAX_ATTACHMENT_COUNT = 5;
+
 function mapMessage(message: {
   _id: { toString(): string };
   projectId: { toString(): string };
@@ -87,6 +90,14 @@ export async function createProjectMessageForSession(
 
   if (!messageBody && !files.length) {
     throw new AppError("Message or attachment is required", 400);
+  }
+
+  if (messageBody.length > MAX_MESSAGE_LENGTH) {
+    throw new AppError("Message is too long", 400);
+  }
+
+  if (files.length > MAX_ATTACHMENT_COUNT) {
+    throw new AppError("Too many attachments", 400);
   }
 
   const attachments = files.length ? await uploadProjectChatAttachments(files) : [];

@@ -12,6 +12,8 @@ import {
   Field,
   SectionCard,
 } from "@/components/admin/dashboard/content-editor-shared";
+import { PackagePresetEditor } from "@/components/admin/dashboard/package-solutions/PackagePresetEditor";
+import { PackageSolutionsSidebar } from "@/components/admin/dashboard/package-solutions/PackageSolutionsSidebar";
 import {
   buildPackagePresetSummary,
   type PackageCalculatorPreset,
@@ -29,6 +31,11 @@ import {
   type PackageSolutionsConfig,
 } from "@/lib/package-solutions";
 import { defaultPriceCalculatorConfig, getLocalizedText, sanitizePriceCalculatorConfig, type PriceCalculatorConfig } from "@/lib/price-calculator";
+import {
+  clonePackageSolutionsConfig,
+  syncPackageSolutionsConfig,
+  syncPackageWithCalculator,
+} from "@/lib/package-solutions-sync";
 
 type PackageSolutionsMode = "content" | "packages" | "instagram";
 
@@ -37,73 +44,6 @@ const localeLabels: Record<PackageLocale, string> = {
   en: "EN",
   ru: "RU",
 };
-
-function cloneInstagramDraft(draft: PackageInstagramDraft): PackageInstagramDraft {
-  return {
-    ...draft,
-    slides: draft.slides.map((item) => ({ ...item })),
-  };
-}
-
-function cloneLocaleContent(content: PackageLocaleContent): PackageLocaleContent {
-  return {
-    ...content,
-    perfectFor: [...content.perfectFor],
-    includedModules: [...content.includedModules],
-    highlights: content.highlights.map((item) => ({ ...item })),
-    faqItems: content.faqItems.map((item) => ({ ...item })),
-    instagram: cloneInstagramDraft(content.instagram),
-  };
-}
-
-function clonePackageRecord(record: PackageSolutionRecord): PackageSolutionRecord {
-  return {
-    ...record,
-    slugs: { ...record.slugs },
-    content: {
-      az: cloneLocaleContent(record.content.az),
-      en: cloneLocaleContent(record.content.en),
-      ru: cloneLocaleContent(record.content.ru),
-    },
-  };
-}
-
-function cloneConfig(config: PackageSolutionsConfig): PackageSolutionsConfig {
-  return {
-    directory: {
-      az: { ...config.directory.az },
-      en: { ...config.directory.en },
-      ru: { ...config.directory.ru },
-    },
-    packages: config.packages.map(clonePackageRecord),
-  };
-}
-
-function syncPackageWithCalculator(
-  pkg: PackageSolutionRecord,
-  calculatorConfig: PriceCalculatorConfig
-): PackageSolutionRecord {
-  const nextPackage = clonePackageRecord(pkg);
-
-  for (const locale of packageLocales) {
-    const summary = buildPackagePresetSummary(locale, calculatorConfig, nextPackage.calculatorPreset);
-    nextPackage.startingPrice = summary.startingPrice;
-    nextPackage.content[locale].includedModules = summary.includedModules;
-    nextPackage.content[locale].timelineLabel = summary.timelineLabel;
-  }
-
-  return nextPackage;
-}
-
-function syncConfigWithCalculator(
-  config: PackageSolutionsConfig,
-  calculatorConfig: PriceCalculatorConfig
-): PackageSolutionsConfig {
-  return {
-    ...config,
-    packages: config.packages.map((item) => syncPackageWithCalculator(item, calculatorConfig)),
-  };
-}
 
 export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }) {
   const [config, setConfig] = useState<PackageSolutionsConfig>(defaultPackageSolutionsConfig);
@@ -145,8 +85,8 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
       const nextCalculatorConfig = calculatorResponse.ok
         ? sanitizePriceCalculatorConfig(calculatorData)
         : defaultPriceCalculatorConfig;
-      const nextConfig = syncConfigWithCalculator(
-        cloneConfig(sanitizePackageSolutionsConfig(data)),
+      const nextConfig = syncPackageSolutionsConfig(
+        clonePackageSolutionsConfig(sanitizePackageSolutionsConfig(data)),
         nextCalculatorConfig
       );
       setCalculatorConfig(nextCalculatorConfig);
@@ -328,7 +268,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
   async function generateInstagramAssets() {
     if (!activePackage) return;
 
-    const nextConfig = cloneConfig(config);
+    const nextConfig = clonePackageSolutionsConfig(config);
     const pkg = nextConfig.packages.find((item) => item.id === activePackage.id);
     if (!pkg) return;
 
@@ -343,7 +283,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(syncConfigWithCalculator(nextConfig, calculatorConfig)),
+        body: JSON.stringify(syncPackageSolutionsConfig(nextConfig, calculatorConfig)),
       });
 
       const data = await response.json().catch(() => null);
@@ -353,7 +293,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
         return;
       }
 
-      const persistedConfig = cloneConfig(sanitizePackageSolutionsConfig(data));
+      const persistedConfig = clonePackageSolutionsConfig(sanitizePackageSolutionsConfig(data));
       setConfig(persistedConfig);
       setActivePackageId((current) => current || persistedConfig.packages[0]?.id || "");
       setPreviewVersion(Date.now());
@@ -392,7 +332,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(syncConfigWithCalculator(config, calculatorConfig)),
+        body: JSON.stringify(syncPackageSolutionsConfig(config, calculatorConfig)),
       });
 
       const data = await response.json().catch(() => null);
@@ -402,7 +342,7 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
         return;
       }
 
-      const nextConfig = cloneConfig(sanitizePackageSolutionsConfig(data));
+      const nextConfig = clonePackageSolutionsConfig(sanitizePackageSolutionsConfig(data));
       setConfig(nextConfig);
       setActivePackageId((current) => current || nextConfig.packages[0]?.id || "");
       setSuccess("Paketlər yeniləndi.");
@@ -484,6 +424,17 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
 
       <div className={`grid gap-6 ${mode === "content" ? "" : "xl:grid-cols-[340px_minmax(0,1fr)]"}`}>
         {mode !== "content" ? (
+          <PackageSolutionsSidebar
+            packages={config.packages}
+            activeLocale={activeLocale}
+            activePackageId={activePackage?.id ?? ""}
+            onSelectLocale={setActiveLocale}
+            onSelectPackage={setActivePackageId}
+            onMovePackage={movePackage}
+            onRemovePackage={removePackage}
+          />
+        ) : null}
+        {false ? (
           <aside className="space-y-6">
             <SectionCard title="Paketlər">
               <div className="space-y-3">
@@ -595,6 +546,16 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
                 </div>
               </SectionCard>
 
+              <PackagePresetEditor
+                activeLocale={activeLocale}
+                activePackage={activePackage}
+                calculatorConfig={calculatorConfig}
+                activePresetSummary={activePresetSummary}
+                onUpdatePreset={updateCalculatorPreset}
+              />
+
+              {false ? (
+                <>
               <SectionCard title="Kalkulyator preset">
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="block">
@@ -779,6 +740,8 @@ export function PackageSolutionsManager({ mode }: { mode: PackageSolutionsMode }
                   ))}
                 </div>
               </SectionCard>
+                </>
+              ) : null}
             </>
           ) : null}
 
